@@ -457,7 +457,6 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, anr_f
 
 
 def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False, anr_funder_doi='10.13039/501100001665'):
-    # First group by year, then by publisher
     yearly_publisher_data = defaultdict(lambda: defaultdict(list))
     for row in data:
         year = row.get('created_year', '')
