@@ -56,7 +56,7 @@ def calculate_doi_asserted_by_stats(data, anr_funder_doi):
     unique_dois = set()
 
     for row in data:
-        doi = row.get('doi', '')
+        doi = row.get('doi', '').lower().strip()
         unique_dois.add(doi)
 
         funder_dois = row.get('funder_dois', '')
@@ -152,7 +152,7 @@ def calculate_boolean_field_stats(data, field_name, include_missing=False):
 def calculate_funder_doi_stats(data, include_missing=False):
     doi_values = {}
     for row in data:
-        doi = row.get('doi', '')
+        doi = row.get('doi', '').lower().strip()
         value = parse_boolean_value(row.get('has_anr_funder_doi', ''))
         if value == True or value == False or (include_missing and (value == 'missing' or value == 'invalid')):
             doi_values[doi] = value
@@ -215,7 +215,7 @@ def calculate_anr_code_stats(data, include_missing=False):
 def calculate_funder_name_stats(data, include_missing=False):
     doi_values = {}
     for row in data:
-        doi = row.get('doi', '')
+        doi = row.get('doi', '').lower().strip()
         value = parse_boolean_value(row.get('anr_name_in_funders', ''))
         if value == True or value == False or (include_missing and (value == 'missing' or value == 'invalid')):
             if doi in doi_values:
@@ -287,7 +287,7 @@ def calculate_potential_stats(data):
     doi_metrics = defaultdict(
         lambda: {'has_funder_doi': False, 'has_award_id': False, 'has_funder_name': False})
     for row in data:
-        doi = row.get('doi', '')
+        doi = row.get('doi', '').lower().strip()
         has_funder_doi = parse_boolean_value(row.get('has_anr_funder_doi', ''))
         has_award_id = parse_boolean_value(row.get('anr_code_in_awards', ''))
         has_funder_name = parse_boolean_value(
@@ -398,7 +398,6 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, anr_f
             'total_records': doi_stats['total']
         })
         
-        # Process boolean fields
         for field, values in aggregate_stats.items():
             if field != 'doi_asserted_by' and field != 'potential':
                 stats.append({
@@ -441,7 +440,6 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, anr_f
                             'total_records': values['total']
                         })
         
-        # Process potential stats
         potential = aggregate_stats['potential']
         stats.append({
             'publisher': publisher,
@@ -523,7 +521,6 @@ def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False
                 'total_records': doi_stats['total']
             })
             
-            # Process boolean fields
             for field, values in aggregate_stats.items():
                 if field != 'doi_asserted_by' and field != 'potential':
                     stats.append({
@@ -570,7 +567,6 @@ def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False
                                 'total_records': values['total']
                             })
             
-            # Process potential stats
             potential = aggregate_stats['potential']
             stats.append({
                 'year': year,
