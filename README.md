@@ -9,7 +9,7 @@
 
 **TLDR**: ANR funding data -> Use award codes to find DOIs in HAL -> Use DOIs to get funding metadata from Crossref -> Use to create completeness stats.
 
-Data:
+## Data:
 
 Inputs and outputs are available [here](https://drive.google.com/drive/folders/15pbifGDlmRUv8aNyPJDE_duxR9iGiXbX).
 
