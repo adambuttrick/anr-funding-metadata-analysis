@@ -1,13 +1,13 @@
-# Metadata Health Reports UI
+# Funding Metadata Dashboard UI
 
-Demo/example UI for Metadata Health Reports. Live at [https://metadata-health-ui.vercel.app](https://metadata-health-ui.vercel.app)
+Demo/example UI for Funding Metadata Dashboard. Live at [https://metadata-health-ui.vercel.app](https://metadata-health-ui.vercel.app)
 
 ## Setup
-1. If using a local version of the API, setup and start using the instructions in the [Metadata Health Report API](https://github.com/adambuttrick/metadata-health-api).
+1. If using a local version of the API, setup and start using the instructions in the [Funding Metadata Dashboard API](https://github.com/adambuttrick/anr-funding-metadata-analysis/tree/main/funding-metadata-api).
 
-2. Create a `.env.local` file in the root directory (mandatory) with either the URL for the local or deployed instance of the API:
+2. Create a `.env` file in the root directory (mandatory) with either the URL for the local or deployed instance of the API:
 ```
-# Required - URL of your Metadata Health API instance, e.g.:
+# Required - URL of your Funding Metadata Dashboard API instance, e.g.:
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 ```
 3. Install the packages:

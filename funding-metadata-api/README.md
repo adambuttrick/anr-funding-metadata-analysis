@@ -1,4 +1,4 @@
-# Metadata Health API
+# Funding Metadata Dashboard API
 
 API for the demo Funding Metadata Dashboard UI. Live at [https://funding-metadata-api.vercel.app](https://funding-metadata-api.vercel.app)
 
