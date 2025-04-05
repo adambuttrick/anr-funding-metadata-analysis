@@ -8,7 +8,7 @@ Demo/example UI for Funding Metadata Dashboard. Live at [https://metadata-health
 2. Create a `.env` file in the root directory (mandatory) with either the URL for the local or deployed instance of the API:
 ```
 # Required - URL of your Funding Metadata Dashboard API instance, e.g.:
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
 ```
 3. Install the packages:
 ```bash
