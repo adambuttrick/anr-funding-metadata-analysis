@@ -23,7 +23,6 @@ yarn dev
 5. Before deployment, ensure TypeScript checks pass and all tests are successful:
 ```bash
 npm run lint
-npm run test
 ```
 
 Open your browser and navigate to the URL shown in the terminal (typically http://localhost:3000) to see the dashboard.
