@@ -17,7 +17,8 @@ def parse_args():
                         required=True, help='Name of the funder')
     parser.add_argument('-d', '--funder-doi', required=True,
                         help='DOI of the funder')
-    parser.add_argument('-r', '--ror-id', help='ROR ID of the funder')
+    parser.add_argument('-r', '--ror-id', required=True,
+                        help='ROR ID of the funder')
     parser.add_argument('-f', '--funder-file', default='funder.json',
                         help='Filename for funder output (default: funder.json)')
     parser.add_argument('-p', '--publisher-file', default='publisher.json',
@@ -52,17 +53,17 @@ def process_aggregate_stats(data):
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'has_anr_funder_doi':
+        elif field == 'has_funder_doi':
             result["has_funder_doi"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_code_in_awards':
+        elif field == 'code_in_awards':
             result["award_code_in_awards"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_name_in_funders':
+        elif field == 'name_in_funders':
             result["funder_name_in_funders"][value_type] = {
                 "count": count,
                 "percentage": percentage
@@ -95,17 +96,17 @@ def process_yearly_stats(data):
                 "percentage": percentage
             }
             result[year]["records_in_funder_data"] = total_records
-        elif field == 'has_anr_funder_doi':
+        elif field == 'has_funder_doi':
             result[year]["has_funder_doi"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_code_in_awards':
+        elif field == 'code_in_awards':
             result[year]["award_code_in_awards"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_name_in_funders':
+        elif field == 'name_in_funders':
             result[year]["funder_name_in_funders"][value_type] = {
                 "count": count,
                 "percentage": percentage
@@ -198,17 +199,17 @@ def process_publisher_data(publisher_stats_data, publisher_yearly_stats_data, fu
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'has_anr_funder_doi':
+        elif field == 'has_funder_doi':
             publishers[member_id]["stats"]["by_funder"][funder_simple_id]["aggregate"]["has_funder_doi"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_code_in_awards':
+        elif field == 'code_in_awards':
             publishers[member_id]["stats"]["by_funder"][funder_simple_id]["aggregate"]["award_code_in_awards"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_name_in_funders':
+        elif field == 'name_in_funders':
             publishers[member_id]["stats"]["by_funder"][funder_simple_id]["aggregate"]["funder_name_in_funders"][value_type] = {
                 "count": count,
                 "percentage": percentage
@@ -242,17 +243,17 @@ def process_publisher_data(publisher_stats_data, publisher_yearly_stats_data, fu
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'has_anr_funder_doi':
+        elif field == 'has_funder_doi':
             publishers[member_id]["stats"]["by_funder"][funder_simple_id]["yearly"][year]["has_funder_doi"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_code_in_awards':
+        elif field == 'code_in_awards':
             publishers[member_id]["stats"]["by_funder"][funder_simple_id]["yearly"][year]["award_code_in_awards"][value_type] = {
                 "count": count,
                 "percentage": percentage
             }
-        elif field == 'anr_name_in_funders':
+        elif field == 'name_in_funders':
             publishers[member_id]["stats"]["by_funder"][funder_simple_id]["yearly"][year]["funder_name_in_funders"][value_type] = {
                 "count": count,
                 "percentage": percentage
@@ -288,39 +289,39 @@ def process_award_data(funding_analysis_data, funder_simple_id, funder_name):
     publisher_counts = defaultdict(lambda: defaultdict(int))
     member_ids = {}
     for row in funding_analysis_data:
-        anr_code = row['anr_code']
+        funder_code = row['funder_code']
         doi = row['doi']
-        title = row['title']
+        title = row.get('title', None)
         created_year = row['created_year']
         publisher = row['publisher']
         member_id = row['member']
-        if not anr_code or not doi or not title:
+        if not funder_code or not doi:
             continue
-        award_hash = hashlib.md5(anr_code.encode()).hexdigest()[:8]
+        award_hash = hashlib.md5(funder_code.encode()).hexdigest()[:8]
         award_id = f"{funder_simple_id}:{award_hash}"
-        awards[anr_code]["id"] = award_id
-        awards[anr_code]["attributes"]["code"] = anr_code
-        if not any(p["id"] == doi for p in awards[anr_code]["relationships"]["publications"]):
+        awards[funder_code]["id"] = award_id
+        awards[funder_code]["attributes"]["code"] = funder_code
+        if not any(p["id"] == doi for p in awards[funder_code]["relationships"]["publications"]):
             publication = {
                 "id": doi,
                 "title": title,
                 "created_year": created_year
             }
-            awards[anr_code]["relationships"]["publications"].append(
+            awards[funder_code]["relationships"]["publications"].append(
                 publication)
-            awards[anr_code]["stats"]["publication_count"] += 1
+            awards[funder_code]["stats"]["publication_count"] += 1
             if created_year:
-                year_counts[anr_code][created_year] += 1
+                year_counts[funder_code][created_year] += 1
             if publisher:
-                publisher_counts[anr_code][publisher] += 1
+                publisher_counts[funder_code][publisher] += 1
                 if member_id:
                     member_ids[publisher] = member_id
-    for anr_code, award in awards.items():
-        for year, count in year_counts[anr_code].items():
+    for funder_code, award in awards.items():
+        for year, count in year_counts[funder_code].items():
             award["stats"]["yearly"][year] = {
                 "publication_count": count
             }
-        for publisher, count in publisher_counts[anr_code].items():
+        for publisher, count in publisher_counts[funder_code].items():
             breakdown = {
                 "id": member_ids.get(publisher, ""),
                 "name": publisher,
@@ -388,7 +389,7 @@ def main():
     publisher_stats_file = os.path.join(input_dir, 'publisher_stats.csv')
     publisher_yearly_stats_file = os.path.join(
         input_dir, 'publisher_yearly_stats.csv')
-    funding_analysis_file = os.path.join(input_dir, 'anr_funding_analysis.csv')
+    funding_analysis_file = os.path.join(input_dir, 'funding_analysis.csv')
 
     aggregate_stats_data = read_csv(aggregate_stats_file)
     yearly_stats_data = read_csv(yearly_stats_file)
@@ -399,7 +400,7 @@ def main():
     ror_id = args.ror_id
     funder_name = args.funder_name
     funder_doi = args.funder_doi
-    funder_simple_id = args.ror_id.split('/')[-1] if args.ror_id else ''
+    funder_simple_id = args.ror_id.split('/')[-1]
 
     total_publications = get_total_publications_count(aggregate_stats_data)
     aggregate_stats = process_aggregate_stats(aggregate_stats_data)
