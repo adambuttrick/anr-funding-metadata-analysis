@@ -26,6 +26,7 @@ python get_crossref_funding_metadata.py -i input_file.csv [-o output_dir] [-r re
 - `-j, --json-dir`: Directory with local JSON files instead of querying API
 - `-f, --failed-output`: CSV file for failed entries (default: failed_entries.csv)
 - `-p, --members-file`: Path to members.json file for publisher names
+- `-e, --funder-doi`: Funder DOI according to Crossref Funder Repository (default: 10.13039/501100001665)
 
 ## Example
 

@@ -45,6 +45,8 @@ def parse_arguments():
                         help='Output CSV file for failed entries (default: failed_entries.csv)')
     parser.add_argument('-p', '--members-file', type=str,
                         help='Path to members.json file for publisher names')
+    parser.add_argument('-e', '--funder-doi', type=str, default='10.13039/501100001665',
+                        help='Funder DOI according to Crossref Funder Repository')
     return parser.parse_args()
 
 
@@ -131,9 +133,8 @@ def extract_funder_info(crossref_data):
     return names, award_ids, funder_dois, doi_asserted_by
 
 
-def check_anr_funder_doi(funder_dois):
-    anr_doi = "10.13039/501100001665"
-    return anr_doi in funder_dois
+def check_anr_funder_doi(funder_dois, funder_doi):
+    return funder_doi in funder_dois
 
 
 def is_discrete_match(needle, haystack):
@@ -200,7 +201,7 @@ def process_publication_data(publication, crossref_data, output_dir, args, membe
         funder_names, award_ids, funder_dois, doi_asserted_by = extract_funder_info(
             crossref_data)
         created_year = extract_created_year(crossref_data)
-        has_anr_funder_doi = check_anr_funder_doi(funder_dois)
+        has_anr_funder_doi = check_anr_funder_doi(funder_dois, args.funder_doi)
         anr_code_in_awards = check_anr_code_in_awards(anr_code, award_ids)
         anr_name_in_funders = check_anr_name_in_funders(funder_names)
         publisher = publisher or args.null_value
