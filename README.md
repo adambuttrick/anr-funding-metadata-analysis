@@ -8,7 +8,7 @@ This repo outlines a generic pipeline for analyzing the completeness and accurac
 
 The process begins with data about funded projects from a funding organization. This typically includes project identifiers, award/grant codes, and other project metadata. This information serves as the authoritative source against which publication metadata will be compared.
 
-**Implementation Example:** The ANR pipeline uses a dataset from dataanr.opendatasoft.com containing ANR project codes and details for projects funded between 2005-2024.
+**Implementation Example:** As input, we use an [Agence Nationale de la Recherche (ANR)](https://anr.fr) [dataset](https://dataanr.opendatasoft.com/explore/dataset/20-ans-de-l-anr-liste-projets-plan-d-action_2005-a-2024/table/) containing ANR project codes and details for projects funded between 2005-2024.
 
 ### Stage 2: Publication Identification
 
