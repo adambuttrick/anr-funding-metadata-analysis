@@ -21,8 +21,8 @@ def parse_arguments():
                         help='Input CSV file path')
     parser.add_argument('-o', '--output-dir', default='crossref_data',
                         help='Output directory for JSON files (default: crossref_data)')
-    parser.add_argument('-r', '--results', default='anr_funding_analysis.csv',
-                        help='Output CSV file for results (default: analysis_results.csv)')
+    parser.add_argument('-r', '--results', default='funding_analysis.csv',
+                        help='Output CSV file for results (default: funding_analysis.csv)')
     parser.add_argument('-d', '--delay', type=float, default=1.0,
                         help='Delay between API requests in seconds (default: 1.0)')
     parser.add_argument('-m', '--retries', type=int, default=3,
@@ -45,8 +45,12 @@ def parse_arguments():
                         help='Output CSV file for failed entries (default: failed_entries.csv)')
     parser.add_argument('-p', '--members-file', type=str,
                         help='Path to members.json file for publisher names')
-    parser.add_argument('-e', '--funder-doi', type=str, default='10.13039/501100001665',
-                        help='Funder DOI according to Crossref Funder Repository')
+    parser.add_argument('-c', '--funder-config', type=str, required=True,
+                        help='Path to funder configuration JSON file')
+    parser.add_argument('--limit', type=int,
+                        help='Limit the number of publications to process (for testing)')
+    parser.add_argument('--force-overwrite', action='store_true',
+                        help='Force overwrite existing output files without prompting')
     return parser.parse_args()
 
 
@@ -58,6 +62,30 @@ def log_error(log_file, doi, error_message):
     with log_lock:
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(f"[{timestamp}] DOI: {doi} - {error_message}\n")
+
+
+def check_output_files(args):
+    if args.force_overwrite:
+        return True
+        
+    results_exists = os.path.exists(args.results)
+    failed_exists = os.path.exists(args.failed_output)
+    
+    if results_exists or failed_exists:
+        existing_files = []
+        if results_exists:
+            existing_files.append(args.results)
+        if failed_exists:
+            existing_files.append(args.failed_output)
+            
+        print(f"Warning: The following output file(s) already exist: {', '.join(existing_files)}")
+        response = input("Do you want to overwrite? (y/n): ").strip().lower()
+        
+        if response != 'y':
+            print("Operation aborted. Please specify different output file names.")
+            return False
+            
+    return True
 
 
 def normalize_text(text):
@@ -133,8 +161,8 @@ def extract_funder_info(crossref_data):
     return names, award_ids, funder_dois, doi_asserted_by
 
 
-def check_anr_funder_doi(funder_dois, funder_doi):
-    return funder_doi in funder_dois
+def check_funder_doi(funder_dois, target_funder_doi):
+    return target_funder_doi in funder_dois
 
 
 def is_discrete_match(needle, haystack):
@@ -144,8 +172,8 @@ def is_discrete_match(needle, haystack):
     normalized_haystack = normalize_text(haystack)
     if normalized_needle == normalized_haystack:
         return True
-    if needle.lower() == "anr":
-        return bool(re.search(r'\banr\b', haystack.lower()))
+    if re.search(rf'\b{re.escape(needle.lower())}\b', haystack.lower()):
+        return True
     needle_tokens = set(tokenize_text(needle))
     haystack_tokens = set(tokenize_text(haystack))
     if not needle_tokens:
@@ -155,29 +183,19 @@ def is_discrete_match(needle, haystack):
     return match_percentage >= 0.75
 
 
-def check_anr_code_in_awards(anr_code, award_ids):
-    if not award_ids or not anr_code:
+def check_code_in_awards(funder_code, award_ids):
+    if not award_ids or not funder_code:
         return False
     for award in award_ids:
-        if is_discrete_match(anr_code, award):
+        if is_discrete_match(funder_code, award):
             return True
     return False
 
 
-def check_anr_name_in_funders(funder_names):
-    anr_variations = [
-        "agence nationale de la recherche",
-        "french national agency for research",
-        "anr",
-        "french national research agency",
-        "national agency for research"
-    ]
+def check_name_in_funders(funder_names, name_variations):
     for name in funder_names:
-        if re.search(r'\banr\b', name.lower()):
-            return True
-    for name in funder_names:
-        for variation in anr_variations:
-            if variation != "anr" and is_discrete_match(variation, name):
+        for variation in name_variations:
+            if variation.lower() == name.lower() or is_discrete_match(variation, name):
                 return True
     return False
 
@@ -188,9 +206,26 @@ def join_with_null_placeholder(items, separator=';', null_value='NULL'):
     return separator.join(item if item else null_value for item in items)
 
 
-def process_publication_data(publication, crossref_data, output_dir, args, member_map=None):
+def load_funder_config(config_file):
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        required_fields = ['funder_doi', 'name_variations']
+        for field in required_fields:
+            if field not in config:
+                raise ValueError(f"Missing required field '{field}' in funder config file")
+        
+        return config
+    except Exception as e:
+        print(f"Error loading funder configuration file: {str(e)}")
+        traceback.print_exc()
+        raise
+
+
+def process_publication_data(publication, crossref_data, output_dir, args, funder_config, member_map=None):
     doi = publication['doi']
-    anr_code = publication['anr_code']
+    funder_code = publication['funder_code']
     safe_filename = doi.replace('/', '_') + '.json'
     output_path = os.path.join(output_dir, safe_filename)
     try:
@@ -201,9 +236,9 @@ def process_publication_data(publication, crossref_data, output_dir, args, membe
         funder_names, award_ids, funder_dois, doi_asserted_by = extract_funder_info(
             crossref_data)
         created_year = extract_created_year(crossref_data)
-        has_anr_funder_doi = check_anr_funder_doi(funder_dois, args.funder_doi)
-        anr_code_in_awards = check_anr_code_in_awards(anr_code, award_ids)
-        anr_name_in_funders = check_anr_name_in_funders(funder_names)
+        has_funder_doi = check_funder_doi(funder_dois, funder_config['funder_doi'])
+        code_in_awards = check_code_in_awards(funder_code, award_ids)
+        name_in_funders = check_name_in_funders(funder_names, funder_config['name_variations'])
         publisher = publisher or args.null_value
         member = member or args.null_value
         created_year = created_year or args.null_value
@@ -215,9 +250,9 @@ def process_publication_data(publication, crossref_data, output_dir, args, membe
             'award_ids': join_with_null_placeholder(award_ids, null_value=args.null_value),
             'funder_dois': join_with_null_placeholder(funder_dois, null_value=args.null_value),
             'doi_asserted_by': join_with_null_placeholder(doi_asserted_by, null_value=args.null_value),
-            'has_anr_funder_doi': has_anr_funder_doi,
-            'anr_code_in_awards': anr_code_in_awards,
-            'anr_name_in_funders': anr_name_in_funders,
+            'has_funder_doi': has_funder_doi,
+            'code_in_awards': code_in_awards,
+            'name_in_funders': name_in_funders,
             'created_year': created_year,
             'error': args.null_value
         })
@@ -239,9 +274,9 @@ def create_error_result(publication, args, error_message):
         'award_ids': args.null_value,
         'funder_dois': args.null_value,
         'doi_asserted_by': args.null_value,
-        'has_anr_funder_doi': False,
-        'anr_code_in_awards': False,
-        'anr_name_in_funders': False,
+        'has_funder_doi': False,
+        'code_in_awards': False,
+        'name_in_funders': False,
         'created_year': args.null_value,
         'error': error_message
     })
@@ -262,7 +297,7 @@ def write_failed_entry(writer, result):
         writer.writerow(result)
 
 
-def process_from_local_json(publication, args, writer, failed_writer, member_map=None):
+def process_from_local_json(publication, args, writer, failed_writer, funder_config, member_map=None):
     doi = publication['doi']
     safe_filename = doi.replace('/', '_') + '.json'
     file_path = os.path.join(args.json_dir, safe_filename)
@@ -271,7 +306,7 @@ def process_from_local_json(publication, args, writer, failed_writer, member_map
             with open(file_path, 'r', encoding='utf-8') as f:
                 crossref_data = json.load(f)
                 result, success = process_publication_data(
-                    publication, crossref_data, args.output_dir, args, member_map)
+                    publication, crossref_data, args.output_dir, args, funder_config, member_map)
                 if success:
                     write_result(writer, result)
                     return True
@@ -311,7 +346,7 @@ class RateLimiter:
 
 
 class RequestManager:
-    def __init__(self, args, writer, failed_writer, member_map=None):
+    def __init__(self, args, writer, failed_writer, funder_config, member_map=None):
         self.args = args
         self.writer = writer
         self.failed_writer = failed_writer
@@ -333,6 +368,7 @@ class RequestManager:
         self.processed_dois = set()
         self.processed_dois_lock = Lock()
         self.member_map = member_map
+        self.funder_config = funder_config
 
     def start_retry_workers(self, num_workers):
         for i in range(num_workers):
@@ -382,7 +418,8 @@ class RequestManager:
                 doi, headers, json_dir=self.args.json_dir)
             if crossref_data:
                 result, success = process_publication_data(
-                    publication, crossref_data, self.output_dir, self.args, self.member_map)
+                    publication, crossref_data, self.output_dir, self.args, 
+                    self.funder_config, self.member_map)
                 with self.processed_dois_lock:
                     self.processed_dois.add(doi)
                 if success:
@@ -480,7 +517,8 @@ class RequestManager:
                 with self.processed_dois_lock:
                     self.processed_dois.add(doi)
                 result, success = process_publication_data(
-                    publication, crossref_data, self.output_dir, self.args, self.member_map)
+                    publication, crossref_data, self.output_dir, self.args, 
+                    self.funder_config, self.member_map)
                 if success:
                     write_result(self.writer, result)
                 else:
@@ -540,29 +578,45 @@ def load_member_map(members_file):
 
 def main():
     args = parse_arguments()
+    
+    if not check_output_files(args):
+        return
+        
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
+    
+    try:
+        funder_config = load_funder_config(args.funder_config)
+    except Exception as e:
+        print(f"Failed to load funder configuration. Exiting.")
+        return
+    
     member_map = load_member_map(args.members_file)
     if args.members_file and not member_map:
         print(f"Warning: Failed to load members file {args.members_file}")
+    
     file_exists = os.path.exists(args.results)
     failed_exists = os.path.exists(args.failed_output)
     with open(args.input, 'r', encoding='utf-8') as f_in:
         reader = csv.DictReader(f_in)
         fieldnames = list(reader.fieldnames) + [
             'publisher', 'member', 'funder_names', 'award_ids',
-            'funder_dois', 'doi_asserted_by', 'has_anr_funder_doi',
-            'anr_code_in_awards', 'anr_name_in_funders', 'created_year', 'error'
+            'funder_dois', 'doi_asserted_by', 'has_funder_doi',
+            'code_in_awards', 'name_in_funders', 'created_year', 'error'
         ]
         publications = list(reader)
-        with open(args.results, 'a' if file_exists else 'w', encoding='utf-8', newline='') as f_out, \
-                open(args.failed_output, 'a' if failed_exists else 'w', encoding='utf-8', newline='') as f_failed:
+        
+        if args.limit and args.limit > 0:
+            publications = publications[:args.limit]
+            print(f"Limiting processing to the first {args.limit} publications (out of {len(publications)} total)")
+        
+        with open(args.results, 'w', encoding='utf-8') as f_out, \
+                open(args.failed_output, 'w', encoding='utf-8') as f_failed:
             writer = csv.DictWriter(f_out, fieldnames=fieldnames)
             failed_writer = csv.DictWriter(f_failed, fieldnames=fieldnames)
-            if not file_exists:
-                writer.writeheader()
-            if not failed_exists:
-                failed_writer.writeheader()
+            writer.writeheader()
+            failed_writer.writeheader()
+            
             if args.json_dir:
                 print(f"Processing {len(publications)} publications from local JSON files in {args.json_dir}")
                 success_count = 0
@@ -571,7 +625,8 @@ def main():
                     futures = []
                     for publication in publications:
                         future = executor.submit(
-                            process_from_local_json, publication, args, writer, failed_writer, member_map
+                            process_from_local_json, publication, args, writer, 
+                            failed_writer, funder_config, member_map
                         )
                         futures.append(future)
                     for i, future in enumerate(concurrent.futures.as_completed(futures)):
@@ -598,7 +653,7 @@ def main():
                 print(f"Error log saved to: {args.log_file}")
             else:
                 manager = RequestManager(
-                    args, writer, failed_writer, member_map)
+                    args, writer, failed_writer, funder_config, member_map)
                 manager.start_retry_workers(max(1, args.workers // 2))
                 workers = args.workers if args.token else 1
                 max_concurrent = 3 if args.token else 1
