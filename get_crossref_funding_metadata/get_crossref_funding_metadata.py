@@ -643,7 +643,7 @@ def main():
                           f"Success: {success}, Errors: {errors}, "
                           f"Retries remaining: {retries_left}")
                     time.sleep(2.0)
-                    if retries_left == 0:
+                    if processed == total_expected:
                         break
                 manager.shutdown()
                 with manager.counter_lock:
