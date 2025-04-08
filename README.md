@@ -14,3 +14,6 @@
 Summary data is available in the spreadsheet [here](https://docs.google.com/spreadsheets/d/1-wnkbKpirMUf6O4okM5BQKZL6elqTtmG/edit?usp=sharing&ouid=112957560476919577575&rtpof=true&sd=true).
 
 
+## For inspiration
+
+Here is the [ANR variation](https://anr.fr/fr/lanr/engagements/la-science-ouverte/le-barometre-science-ouverte-anr/) of the French Open Science Monitor, just for inspiration if needed.
