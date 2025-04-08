@@ -28,13 +28,8 @@ With publication identifiers established, the pipeline then retrieves detailed m
 
 The output is a comprehensive CSV file containing analysis results for each publication.
 
-### Stage 4: Supplementary Data Collection
 
-Additional data sources may be incorporated to enrich the analysis, including publisher information, open access status, or alternative funding records.
-
-**Implementation Example:** The utility script `get_all_crossref_members.py` retrieves information about all Crossref member organizations to create a mapping between publisher IDs and their names, enhancing the readability and utility of the analysis.
-
-### Stage 5: Statistical Analysis and Data Transformation
+### Stage 4: Statistical Analysis and Data Transformation
 
 Once the data is prepared, this stage generates comprehensive statistics on funding metadata completeness across different dimensions and transforms the data into structured formats suitable for programmatic access.
 
@@ -46,13 +41,13 @@ Once the data is prepared, this stage generates comprehensive statistics on fund
 
 These CSV statistics are then converted to structured JSON data using `convert_csv_to_api_json_format.py` that transforms the statistical data into hierarchical JSON structures representing funders, publishers, and awards with their associated metadata and relationships for use in the API layer.
 
-### Stage 6: Data Access Layer
+### Stage 5: Data Access Layer
 
 To make the analysis accessible to users, a data access layer transforms the structured data outputs into queryable endpoints.
 
 **Implementation Example:** The `funding-metadata-api` directory contains an Express.js REST API that serves the processed statistics through endpoints for funders, publishers, and awards with search functionality and filtering capabilities. It reads the JSON files produced in the previous stage, caches them in memory, and provides various API endpoints for accessing the data.
 
-### Stage 7: Visualization and Interaction
+### Stage 6: Visualization and Interaction
 
 The final stage presents the analysis through an interactive interface that allows stakeholders to explore the data visually.
 
