@@ -7,7 +7,7 @@ from collections import defaultdict, Counter
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description='Calculate statistics for ANR data fields.')
+        description='Calculate statistics for funding data fields.')
     parser.add_argument('-i', '--input_file', required=True,
                         help='Path to the input CSV file')
     parser.add_argument('--aggregate-output', default='aggregate_stats.csv',
@@ -22,8 +22,7 @@ def parse_arguments():
                         help='Only calculate aggregate statistics (skip publisher breakdown)')
     parser.add_argument('--include-missing', action='store_true',
                         help='Include missing values in the statistics')
-    parser.add_argument('--anr-funder-doi', default='10.13039/501100001665',
-                        help='ANR funder DOI to track (default: 10.13039/501100001665)')
+    parser.add_argument('--funder-doi', required=True, help='Funder DOI to track')
     return parser.parse_args()
 
 
@@ -51,7 +50,7 @@ def parse_boolean_value(value):
         return 'invalid'
 
 
-def calculate_doi_asserted_by_stats(data, anr_funder_doi):
+def calculate_doi_asserted_by_stats(data, funder_doi):
     doi_counter = defaultdict(Counter)
     unique_dois = set()
 
@@ -75,10 +74,10 @@ def calculate_doi_asserted_by_stats(data, anr_funder_doi):
             if len(asserter_list) < len(funder_doi_list):
                 asserter_list.extend(['missing'] * (len(funder_doi_list) - len(asserter_list)))
 
-            anr_found = False
-            for i, funder_doi in enumerate(funder_doi_list):
-                if funder_doi == anr_funder_doi:
-                    anr_found = True
+            funder_found = False
+            for i, funder_doi_item in enumerate(funder_doi_list):
+                if funder_doi_item == funder_doi:
+                    funder_found = True
                     if i < len(asserter_list):
                         asserter = asserter_list[i]
                         if asserter == 'crossref':
@@ -93,7 +92,7 @@ def calculate_doi_asserted_by_stats(data, anr_funder_doi):
                         doi_counter[doi]['missing'] += 1
                     break
 
-            if not anr_found:
+            if not funder_found:
                 doi_counter[doi]['not_asserted'] += 1
 
     counter = Counter()
@@ -139,11 +138,11 @@ def calculate_doi_asserted_by_stats(data, anr_funder_doi):
 
 
 def calculate_boolean_field_stats(data, field_name, include_missing=False):
-    if field_name == 'has_anr_funder_doi':
+    if field_name == 'has_funder_doi':
         return calculate_funder_doi_stats(data, include_missing)
-    elif field_name == 'anr_code_in_awards':
-        return calculate_anr_code_stats(data, include_missing)
-    elif field_name == 'anr_name_in_funders':
+    elif field_name == 'code_in_awards':
+        return calculate_award_code_stats(data, include_missing)
+    elif field_name == 'name_in_funders':
         return calculate_funder_name_stats(data, include_missing)
     else:
         return calculate_generic_boolean_stats(data, field_name, include_missing)
@@ -153,7 +152,7 @@ def calculate_funder_doi_stats(data, include_missing=False):
     doi_values = {}
     for row in data:
         doi = row.get('doi', '').lower().strip()
-        value = parse_boolean_value(row.get('has_anr_funder_doi', ''))
+        value = parse_boolean_value(row.get('has_funder_doi', ''))
         if value == True or value == False or (include_missing and (value == 'missing' or value == 'invalid')):
             doi_values[doi] = value
 
@@ -178,10 +177,10 @@ def calculate_funder_doi_stats(data, include_missing=False):
     }
 
 
-def calculate_anr_code_stats(data, include_missing=False):
+def calculate_award_code_stats(data, include_missing=False):
     counter = Counter()
     for row in data:
-        value = parse_boolean_value(row.get('anr_code_in_awards', ''))
+        value = parse_boolean_value(row.get('code_in_awards', ''))
         if value == True or value == False or (include_missing and (value == 'missing' or value == 'invalid')):
             counter[value] += 1
 
@@ -216,7 +215,7 @@ def calculate_funder_name_stats(data, include_missing=False):
     doi_values = {}
     for row in data:
         doi = row.get('doi', '').lower().strip()
-        value = parse_boolean_value(row.get('anr_name_in_funders', ''))
+        value = parse_boolean_value(row.get('name_in_funders', ''))
         if value == True or value == False or (include_missing and (value == 'missing' or value == 'invalid')):
             if doi in doi_values:
                 if doi_values[doi] == True:
@@ -288,10 +287,10 @@ def calculate_potential_stats(data):
         lambda: {'has_funder_doi': False, 'has_award_id': False, 'has_funder_name': False})
     for row in data:
         doi = row.get('doi', '').lower().strip()
-        has_funder_doi = parse_boolean_value(row.get('has_anr_funder_doi', ''))
-        has_award_id = parse_boolean_value(row.get('anr_code_in_awards', ''))
+        has_funder_doi = parse_boolean_value(row.get('has_funder_doi', ''))
+        has_award_id = parse_boolean_value(row.get('code_in_awards', ''))
         has_funder_name = parse_boolean_value(
-            row.get('anr_name_in_funders', ''))
+            row.get('name_in_funders', ''))
 
         if has_funder_doi == True:
             doi_metrics[doi]['has_funder_doi'] = True
@@ -313,10 +312,10 @@ def calculate_potential_stats(data):
     }
 
 
-def calculate_aggregate_stats(data, boolean_fields, include_missing=False, anr_funder_doi='10.13039/501100001665'):
+def calculate_aggregate_stats(data, boolean_fields, include_missing=False, funder_doi=None):
     stats = {}
     stats['doi_asserted_by'] = calculate_doi_asserted_by_stats(
-        data, anr_funder_doi)
+        data, funder_doi)
     for field in boolean_fields:
         stats[field] = calculate_boolean_field_stats(
             data, field, include_missing)
@@ -324,7 +323,7 @@ def calculate_aggregate_stats(data, boolean_fields, include_missing=False, anr_f
     return stats
 
 
-def calculate_yearly_stats(data, boolean_fields, include_missing=False, anr_funder_doi='10.13039/501100001665'):
+def calculate_yearly_stats(data, boolean_fields, include_missing=False, funder_doi=None):
     yearly_data = defaultdict(list)
     for row in data:
         year = row.get('created_year', '')
@@ -333,13 +332,13 @@ def calculate_yearly_stats(data, boolean_fields, include_missing=False, anr_fund
     
     stats = {}
     for year, year_data in yearly_data.items():
-        year_stats = calculate_aggregate_stats(year_data, boolean_fields, include_missing, anr_funder_doi)
+        year_stats = calculate_aggregate_stats(year_data, boolean_fields, include_missing, funder_doi)
         stats[year] = year_stats
     
     return stats
 
 
-def calculate_publisher_stats(data, boolean_fields, include_missing=False, anr_funder_doi='10.13039/501100001665'):
+def calculate_publisher_stats(data, boolean_fields, include_missing=False, funder_doi=None):
     publisher_data = defaultdict(list)
     for row in data:
         key = (row.get('publisher', ''), row.get('member', ''))
@@ -347,7 +346,7 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, anr_f
 
     stats = []
     for (publisher, member), pub_data in publisher_data.items():
-        aggregate_stats = calculate_aggregate_stats(pub_data, boolean_fields, include_missing, anr_funder_doi)
+        aggregate_stats = calculate_aggregate_stats(pub_data, boolean_fields, include_missing, funder_doi)
         
         doi_stats = aggregate_stats['doi_asserted_by']
         stats.append({
@@ -454,7 +453,7 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, anr_f
     return stats
 
 
-def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False, anr_funder_doi='10.13039/501100001665'):
+def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False, funder_doi=None):
     yearly_publisher_data = defaultdict(lambda: defaultdict(list))
     for row in data:
         year = row.get('created_year', '')
@@ -465,7 +464,7 @@ def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False
     stats = []
     for year in sorted(yearly_publisher_data.keys()):
         for (publisher, member), pub_data in yearly_publisher_data[year].items():
-            aggregate_stats = calculate_aggregate_stats(pub_data, boolean_fields, include_missing, anr_funder_doi)
+            aggregate_stats = calculate_aggregate_stats(pub_data, boolean_fields, include_missing, funder_doi)
             
             doi_stats = aggregate_stats['doi_asserted_by']
             stats.append({
@@ -737,8 +736,7 @@ def write_yearly_csv(yearly_stats, output_path, include_missing=False):
                     'percentage': values['true_percentage'],
                     'total_records': values['total']
                 })
-                rows.append({
-                    'year': year,
+                rows.append({'year': year,
                     'field': field,
                     'value_type': 'false',
                     'count': values['false_count'],
@@ -815,27 +813,26 @@ def write_publisher_yearly_csv(publisher_yearly_stats, output_path):
 
 def main():
     args = parse_arguments()
-    boolean_fields = ['has_anr_funder_doi',
-                      'anr_code_in_awards', 'anr_name_in_funders']
+    boolean_fields = ['has_funder_doi', 'code_in_awards', 'name_in_funders']
     data = read_csv_data(args.input_file)
 
     aggregate_stats = calculate_aggregate_stats(
-        data, boolean_fields, args.include_missing, args.anr_funder_doi)
+        data, boolean_fields, args.include_missing, args.funder_doi)
     write_aggregate_csv(
         aggregate_stats, args.aggregate_output, args.include_missing)
 
     yearly_stats = calculate_yearly_stats(
-        data, boolean_fields, args.include_missing, args.anr_funder_doi)
+        data, boolean_fields, args.include_missing, args.funder_doi)
     write_yearly_csv(
         yearly_stats, args.yearly_output, args.include_missing)
 
     if not args.aggregate_only:
         publisher_stats = calculate_publisher_stats(
-            data, boolean_fields, args.include_missing, args.anr_funder_doi)
+            data, boolean_fields, args.include_missing, args.funder_doi)
         write_publisher_csv(publisher_stats, args.publisher_output)
         
         publisher_yearly_stats = calculate_publisher_yearly_stats(
-            data, boolean_fields, args.include_missing, args.anr_funder_doi)
+            data, boolean_fields, args.include_missing, args.funder_doi)
         write_publisher_yearly_csv(publisher_yearly_stats, args.publisher_yearly_output)
 
 
