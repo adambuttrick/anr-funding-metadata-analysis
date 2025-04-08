@@ -17,8 +17,7 @@ def parse_args():
                         required=True, help='Name of the funder')
     parser.add_argument('-d', '--funder-doi', required=True,
                         help='DOI of the funder')
-    parser.add_argument('-r', '--ror-id', required=True,
-                        help='ROR ID of the funder')
+    parser.add_argument('-r', '--ror-id', help='ROR ID of the funder')
     parser.add_argument('-f', '--funder-file', default='funder.json',
                         help='Filename for funder output (default: funder.json)')
     parser.add_argument('-p', '--publisher-file', default='publisher.json',
@@ -400,7 +399,7 @@ def main():
     ror_id = args.ror_id
     funder_name = args.funder_name
     funder_doi = args.funder_doi
-    funder_simple_id = args.ror_id.split('/')[-1]
+    funder_simple_id = args.ror_id.split('/')[-1] if args.ror_id else ''
 
     total_publications = get_total_publications_count(aggregate_stats_data)
     aggregate_stats = process_aggregate_stats(aggregate_stats_data)
