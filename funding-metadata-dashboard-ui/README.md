@@ -1,6 +1,6 @@
 # Funding Metadata Dashboard UI
 
-Demo/example UI for Funding Metadata Dashboard. Live at [https://funding-metadata-dashboard-ui.vercel.app/]https://funding-metadata-dashboard-ui.vercel.app/)
+Demo/example UI for Funding Metadata Dashboard. Live at [https://funding-metadata-dashboard-ui.vercel.app/](https://funding-metadata-dashboard-ui.vercel.app/)
 
 ## Setup
 1. If using a local version of the API, setup and start using the instructions in the [Funding Metadata Dashboard API](https://github.com/adambuttrick/anr-funding-metadata-analysis/tree/main/funding-metadata-api).
