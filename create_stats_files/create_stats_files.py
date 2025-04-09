@@ -8,19 +8,14 @@ def parse_arguments():
         description='Calculate statistics for funding data fields.')
     parser.add_argument('-i', '--input_file', required=True,
                         help='Path to the input CSV file')
-    parser.add_argument('--aggregate-output', default='aggregate_stats.csv',
-                        help='Path to output file for aggregate stats (default: aggregate_stats.csv)')
-    parser.add_argument('--publisher-output', default='publisher_stats.csv',
-                        help='Path to output file for publisher stats (default: publisher_stats.csv)')
-    parser.add_argument('--yearly-output', default='yearly_stats.csv',
-                        help='Path to output file for yearly stats (default: yearly_stats.csv)')
-    parser.add_argument('--publisher-yearly-output', default='publisher_yearly_stats.csv',
-                        help='Path to output file for publisher yearly stats (default: publisher_yearly_stats.csv)')
+    parser.add_argument('-o', '--output-dir', default='./stats_output',
+                        help='Directory to save the output CSV files (default: stats_output)')
     parser.add_argument('--aggregate-only', action='store_true',
                         help='Only calculate aggregate statistics (skip publisher breakdown)')
     parser.add_argument('--include-missing', action='store_true',
                         help='Include missing values in the statistics')
-    parser.add_argument('--funder-doi', required=True, help='Funder DOI to track')
+    parser.add_argument('--funder_doi', required=True,
+                        help='Funder DOI to track')
     return parser.parse_args()
 
 
@@ -66,8 +61,8 @@ def calculate_doi_asserted_by_stats(data, funder_doi):
             asserter_list = []
 
             if doi_asserted_by and doi_asserted_by.strip() != '' and doi_asserted_by.upper() != 'NULL':
-                asserter_list = [a.strip().lower() if a.strip().upper() != 'NULL' else 'missing' 
-                               for a in doi_asserted_by.split(';')]
+                asserter_list = [a.strip().lower() if a.strip().upper() != 'NULL' else 'missing'
+                                 for a in doi_asserted_by.split(';')]
 
             if len(asserter_list) < len(funder_doi_list):
                 asserter_list.extend(['missing'] * (len(funder_doi_list) - len(asserter_list)))
@@ -327,12 +322,12 @@ def calculate_yearly_stats(data, boolean_fields, include_missing=False, funder_d
         year = row.get('created_year', '')
         if year:
             yearly_data[year].append(row)
-    
+
     stats = {}
     for year, year_data in yearly_data.items():
         year_stats = calculate_aggregate_stats(year_data, boolean_fields, include_missing, funder_doi)
         stats[year] = year_stats
-    
+
     return stats
 
 
@@ -345,7 +340,7 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, funde
     stats = []
     for (publisher, member), pub_data in publisher_data.items():
         aggregate_stats = calculate_aggregate_stats(pub_data, boolean_fields, include_missing, funder_doi)
-        
+
         doi_stats = aggregate_stats['doi_asserted_by']
         stats.append({
             'publisher': publisher,
@@ -394,7 +389,7 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, funde
             'percentage': doi_stats['not_asserted_percentage'],
             'total_records': doi_stats['total']
         })
-        
+
         for field, values in aggregate_stats.items():
             if field != 'doi_asserted_by' and field != 'potential':
                 stats.append({
@@ -436,7 +431,7 @@ def calculate_publisher_stats(data, boolean_fields, include_missing=False, funde
                             'percentage': values['invalid_percentage'],
                             'total_records': values['total']
                         })
-        
+
         potential = aggregate_stats['potential']
         stats.append({
             'publisher': publisher,
@@ -458,12 +453,12 @@ def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False
         if year:
             key = (row.get('publisher', ''), row.get('member', ''))
             yearly_publisher_data[year][key].append(row)
-    
+
     stats = []
     for year in sorted(yearly_publisher_data.keys()):
         for (publisher, member), pub_data in yearly_publisher_data[year].items():
             aggregate_stats = calculate_aggregate_stats(pub_data, boolean_fields, include_missing, funder_doi)
-            
+
             doi_stats = aggregate_stats['doi_asserted_by']
             stats.append({
                 'year': year,
@@ -517,7 +512,7 @@ def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False
                 'percentage': doi_stats['not_asserted_percentage'],
                 'total_records': doi_stats['total']
             })
-            
+
             for field, values in aggregate_stats.items():
                 if field != 'doi_asserted_by' and field != 'potential':
                     stats.append({
@@ -563,7 +558,7 @@ def calculate_publisher_yearly_stats(data, boolean_fields, include_missing=False
                                 'percentage': values['invalid_percentage'],
                                 'total_records': values['total']
                             })
-            
+
             potential = aggregate_stats['potential']
             stats.append({
                 'year': year,
@@ -666,7 +661,7 @@ def write_aggregate_csv(aggregate_stats, output_path, include_missing=False):
     headers = ['field', 'value_type', 'count', 'percentage', 'total_records']
 
     try:
-        with open(output_path, 'w', encoding='utf-8') as csvfile:
+        with open(output_path, 'w', encoding='utf-8', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=headers)
             writer.writeheader()
             writer.writerows(rows)
@@ -677,7 +672,7 @@ def write_aggregate_csv(aggregate_stats, output_path, include_missing=False):
 
 def write_yearly_csv(yearly_stats, output_path, include_missing=False):
     rows = []
-    
+
     for year in sorted(yearly_stats.keys()):
         aggregate_stats = yearly_stats[year]
         doi_stats = aggregate_stats['doi_asserted_by']
@@ -774,7 +769,7 @@ def write_yearly_csv(yearly_stats, output_path, include_missing=False):
     headers = ['year', 'field', 'value_type', 'count', 'percentage', 'total_records']
 
     try:
-        with open(output_path, 'w', encoding='utf-8') as csvfile:
+        with open(output_path, 'w', encoding='utf-8', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=headers)
             writer.writeheader()
             writer.writerows(rows)
@@ -787,7 +782,7 @@ def write_publisher_csv(publisher_stats, output_path):
     headers = ['publisher', 'member_id', 'field', 'value_type', 'count', 'percentage', 'total_records']
 
     try:
-        with open(output_path, 'w', encoding='utf-8') as csvfile:
+        with open(output_path, 'w', encoding='utf-8', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=headers)
             writer.writeheader()
             writer.writerows(publisher_stats)
@@ -800,7 +795,7 @@ def write_publisher_yearly_csv(publisher_yearly_stats, output_path):
     headers = ['year', 'publisher', 'member_id', 'field', 'value_type', 'count', 'percentage', 'total_records']
 
     try:
-        with open(output_path, 'w', encoding='utf-8') as csvfile:
+        with open(output_path, 'w', encoding='utf-8', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=headers)
             writer.writeheader()
             writer.writerows(publisher_yearly_stats)
@@ -814,24 +809,31 @@ def main():
     boolean_fields = ['has_funder_doi', 'code_in_awards', 'name_in_funders']
     data = read_csv_data(args.input_file)
 
+    os.makedirs(args.output_dir, exist_ok=True)
+
+    aggregate_output_path = os.path.join(args.output_dir, 'aggregate_stats.csv')
+    yearly_output_path = os.path.join(args.output_dir, 'yearly_stats.csv')
+    publisher_output_path = os.path.join(args.output_dir, 'publisher_stats.csv')
+    publisher_yearly_output_path = os.path.join(args.output_dir, 'publisher_yearly_stats.csv')
+
     aggregate_stats = calculate_aggregate_stats(
         data, boolean_fields, args.include_missing, args.funder_doi)
     write_aggregate_csv(
-        aggregate_stats, args.aggregate_output, args.include_missing)
+        aggregate_stats, aggregate_output_path, args.include_missing)
 
     yearly_stats = calculate_yearly_stats(
         data, boolean_fields, args.include_missing, args.funder_doi)
     write_yearly_csv(
-        yearly_stats, args.yearly_output, args.include_missing)
+        yearly_stats, yearly_output_path, args.include_missing)
 
     if not args.aggregate_only:
         publisher_stats = calculate_publisher_stats(
             data, boolean_fields, args.include_missing, args.funder_doi)
-        write_publisher_csv(publisher_stats, args.publisher_output)
-        
+        write_publisher_csv(publisher_stats, publisher_output_path)
+
         publisher_yearly_stats = calculate_publisher_yearly_stats(
             data, boolean_fields, args.include_missing, args.funder_doi)
-        write_publisher_yearly_csv(publisher_yearly_stats, args.publisher_yearly_output)
+        write_publisher_yearly_csv(publisher_yearly_stats, publisher_yearly_output_path)
 
 
 if __name__ == "__main__":
