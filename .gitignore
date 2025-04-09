@@ -173,6 +173,9 @@ cython_debug/
 .pypirc
 
 
-# Next and JS files
+# next.js
 .next
+# js dependencies
 node_modules
+# typescript
+next-env.d.ts
