@@ -24,5 +24,5 @@ The API will then be available at `http://localhost:3000`
 ## API Documentation
 
 Once running, you can access the API documentation at:
-- Swagger UI: `docs`
+- Swagger UI: `docs` [in local](http://localhost:3000/docs/)
 

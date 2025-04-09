@@ -15,6 +15,20 @@ def parse_arguments():
     return parser.parse_args()
 
 
+def merge_publishers(pub1, pub2):
+    result = {
+        "id": pub1.get("id"),
+        "type": pub1.get("type"),
+        "attributes": pub1.get("attributes")
+    }
+    relationships = pub1.get("relationships", {}).get("publications", {}).get("total", 0) + pub2.get("relationships", {}).get("publications", {}).get("total", 0)
+    result["relationships"] = { "publications": { "total": relationships } }
+    by_funder = pub1.get("stats", {}).get("by_funder", {})
+    by_funder.update(pub2.get("stats", {}).get("by_funder", {}))
+    result["stats"] = { "by_funder": by_funder }
+    return result
+
+
 def main():
     args = parse_arguments()
     os.makedirs(args.output_dir, exist_ok=True)
@@ -24,15 +38,20 @@ def main():
         with open(f"{args.input_dir_2}/{item.get('file_name')}", "r", encoding="utf-8") as f:
             data2 = json.load(f).get(item.get("key"))
         other_data, data = (data2, data1) if len(data1) > len(data2) else (data1, data2)
-        data_ids = [d.get("id") for d in data]
+        tmp = {}
+        for d in data:
+            tmp[d.get("id")] = d
         for d in other_data:
-            if d.get("id") not in data_ids:
-                data.append(d)
+            if d.get("id") in tmp:
+                if item.get("key") == "publishers":
+                    tmp[d.get("id")] = merge_publishers(d, tmp[d.get("id")])
+                else:
+                    # TODO
+                    print(f"a merge should be done for {item.get('key')} and append to data")
             else:
-                # TODO
-                print(f"a merge should be done for {item.get('key')} and append to data")
+                tmp[d.get("id")] = d
         with open(f"{args.output_dir}/{item.get('file_name')}", "w", encoding="utf-8") as f:
-            json.dump({ item.get("key") : data }, f, indent=2)
+            json.dump({ item.get("key") : list(tmp.values()) }, f, indent=2)
 
 
 if __name__ == "__main__":
