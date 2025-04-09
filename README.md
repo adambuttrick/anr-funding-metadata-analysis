@@ -41,13 +41,17 @@ Once the data is prepared, this stage generates comprehensive statistics on fund
 
 These CSV statistics are then converted to structured JSON data using `convert_csv_to_api_json_format.py` that transforms the statistical data into hierarchical JSON structures representing funders, publishers, and awards with their associated metadata and relationships for use in the API layer.
 
-### Stage 5: Data Access Layer
+### Stage 5: Merge multiple results together
+
+`python merge_multiple_json_outputs/merge_multiple_json_outputs.py -i1 input-dir-1 -i2 input-dir-2 -o output-dir`
+
+### Stage 6: Data Access Layer
 
 To make the analysis accessible to users, a data access layer transforms the structured data outputs into queryable endpoints.
 
 **Implementation Example:** The `funding-metadata-api` directory contains an Express.js REST API that serves the processed statistics through endpoints for funders, publishers, and awards with search functionality and filtering capabilities. It reads the JSON files produced in the previous stage, caches them in memory, and provides various API endpoints for accessing the data.
 
-### Stage 6: Visualization and Interaction
+### Stage 7: Visualization and Interaction
 
 The final stage presents the analysis through an interactive interface that allows stakeholders to explore the data visually.
 

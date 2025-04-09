@@ -4,6 +4,7 @@
 4. Move file `funding_analysis.csv` created at step 2 into the stats directory created at step 3 :
 `mv funding_analysis.csv stats_output`
 5. `python convert_csv_to_api_json_format/convert_csv_to_api_json_format.py -i stats_output -o horizon_europe_json -n "horizon europe" -d 10.13039/501100000780`
+6. `python merge_multiple_json_outputs/merge_multiple_json_outputs.py -i1 funding-metadata-api/data -i2 horizon_europe_json -o funding-metadata-api/data_output`
 
 Horizon europe Crossref member ids : https://api.crossref.org/funders/501100000780
 
