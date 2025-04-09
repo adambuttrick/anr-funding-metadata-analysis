@@ -6,7 +6,7 @@ Script to identify and remove duplicate entries from CSV files based on specifie
 ## Usage
 
 ```bash
-python deduplicate_csv.py -i input_file.csv -k "doi,anr_code" [-o output_file.csv] [-d duplicates_file.csv] [-s ","] [-v]
+python deduplicate_csv.py -i input_file.csv -k "doi,funder_code" [-o output_file.csv] [-d duplicates_file.csv] [-s ","] [-v]
 ```
 
 ## Arguments
@@ -22,12 +22,12 @@ python deduplicate_csv.py -i input_file.csv -k "doi,anr_code" [-o output_file.cs
 
 Basic usage:
 ```bash
-python deduplicate_csv.py -i customers.csv -k "anr_code"
+python deduplicate_csv.py -i customers.csv -k "funder_code"
 ```
 
 Multiple deduplication keys:
 ```bash
-python deduplicate_csv.py -i records.csv -k "doi,anr_code" -v
+python deduplicate_csv.py -i records.csv -k "doi,funder_code" -v
 ```
 
 Custom delimiter:
