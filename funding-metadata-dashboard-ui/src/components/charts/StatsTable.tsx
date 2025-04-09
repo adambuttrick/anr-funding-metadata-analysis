@@ -28,14 +28,14 @@ export function StatsTable({
               <tr className="border-b border-gray-200">
                 <th className="w-1/3 text-left px-4 py-3 text-sm font-medium text-gray-600">Publisher</th>
                 <th className="w-1/5 text-left text-sm font-medium text-gray-600 px-4 py-3">Peak date</th>
-                <th className="w-1/5 text-left text-sm font-medium text-gray-600 px-4 py-3">Amount</th>
+                <th className="w-1/5 text-left text-sm font-medium text-gray-600 px-4 py-3">Peak amount</th>
                 <th className="w-1/5 text-left text-sm font-medium text-gray-600 px-4 py-3">Raise</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {/* Aggregate data row */}
               {showAggregate && stats && (
-                <tr 
+                <tr
                   className={`hover:bg-gray-50 transition-colors cursor-pointer ${!selectedPublisher ? 'bg-gray-50' : ''}`}
                   onClick={() => {
                     onPublisherSelect(null);
@@ -45,7 +45,7 @@ export function StatsTable({
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2">
                       <div className="group relative">
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             onRemovePublisher();
@@ -72,12 +72,12 @@ export function StatsTable({
                   </td>
                 </tr>
               )}
-              
+
               {/* Publisher data rows */}
               {publisherDataList.map((publisher, index) => (
                 publisher.stats && (
-                  <tr 
-                    key={publisher.id || `publisher-${index}`} 
+                  <tr
+                    key={publisher.id || `publisher-${index}`}
                     className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedPublisher?.id === publisher.id ? 'bg-gray-50' : ''}`}
                     onClick={() => {
                       const actualPublisher = selectedPublishers.find(p => p.id === publisher.id);
@@ -90,7 +90,7 @@ export function StatsTable({
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-2">
                         <div className="group relative">
-                          <button 
+                          <button
                             onClick={(e) => {
                               e.stopPropagation();
                               onRemovePublisher(publisher.id);
@@ -111,9 +111,9 @@ export function StatsTable({
                     <td className="py-4 px-4 text-base font-medium" style={{ color: publisher.color || '#3B82F6' }}>{publisher.stats.peakDate}</td>
                     <td className="py-4 px-4 text-base font-medium" style={{ color: publisher.color || '#3B82F6' }}>{publisher.stats.amount?.toLocaleString()}%</td>
                     <td className="py-4 px-4">
-                      <div 
-                        className="inline-flex items-center justify-center rounded-full px-4 py-1.5 text-sm font-medium" 
-                        style={{ 
+                      <div
+                        className="inline-flex items-center justify-center rounded-full px-4 py-1.5 text-sm font-medium"
+                        style={{
                           backgroundColor: `${publisher.color || '#3B82F6'}20`,
                           color: publisher.color || '#3B82F6'
                         }}
