@@ -3,7 +3,6 @@ import sys
 import json
 import gzip
 import argparse
-from collections import OrderedDict
 
 def parse_arguments():
     parser = argparse.ArgumentParser(

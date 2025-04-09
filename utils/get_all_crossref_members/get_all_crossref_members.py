@@ -1,10 +1,8 @@
-import os
 import sys
 import json
 import time
 import argparse
 import requests
-from urllib.parse import urlencode
 
 
 def parse_arguments():

@@ -1,6 +1,4 @@
-import os
 import csv
-import sys
 import argparse
 from collections import defaultdict, Counter
 

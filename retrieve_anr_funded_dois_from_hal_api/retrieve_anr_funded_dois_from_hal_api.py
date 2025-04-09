@@ -1,7 +1,6 @@
 import os
 import csv
 import sys
-import json
 import time
 import signal
 import logging

@@ -1,7 +1,6 @@
 import os
 import csv
 import argparse
-from collections import defaultdict
 
 
 def parse_arguments():

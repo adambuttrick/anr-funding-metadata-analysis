@@ -7,7 +7,6 @@ import argparse
 import requests
 import traceback
 import concurrent.futures
-from functools import wraps
 from urllib.parse import quote
 from datetime import datetime
 from threading import Lock, Semaphore, Thread
