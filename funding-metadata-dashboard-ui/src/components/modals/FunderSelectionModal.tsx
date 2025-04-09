@@ -1,35 +1,35 @@
 'use client';
 
 import { useState, useEffect, Fragment, useRef } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, DialogTitle, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useFunder } from '@/contexts/FunderContext';
 import { api, Funder } from '@/lib/api';
 import useSWR from 'swr';
 
 export default function FunderSelectionModal() {
-  const { 
-    showFunderSelectionModal, 
-    setShowFunderSelectionModal, 
-    setSelectedFunder, 
-    setFunderData 
+  const {
+    showFunderSelectionModal,
+    setShowFunderSelectionModal,
+    setSelectedFunder,
+    setFunderData
   } = useFunder();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [filteredFunders, setFilteredFunders] = useState<Funder[]>([]);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
   const { data: fundersResponse, isLoading: isFundersLoading } = useSWR(
-    searchQuery.trim() === '' ? 'funders' : null, 
+    searchQuery.trim() === '' ? 'funders' : null,
     api.getFunders
   );
-  
+
   useEffect(() => {
     if (searchQuery.trim() === '' && fundersResponse?.data) {
       setFilteredFunders(fundersResponse.data);
     }
   }, [fundersResponse, searchQuery]);
-  
+
   useEffect(() => {
     if (searchQuery.trim() === '') {
       if (fundersResponse?.data) {
@@ -37,20 +37,20 @@ export default function FunderSelectionModal() {
       }
       return;
     }
-    
+
     if (debounceTimeout.current) {
       clearTimeout(debounceTimeout.current);
     }
-    
+
     setIsSearching(true);
-    
+
     debounceTimeout.current = setTimeout(async () => {
       try {
         if (searchQuery.trim().length >= 2) {
           const searchResponse = await api.searchFunders(searchQuery);
           setFilteredFunders(searchResponse.data);
         } else if (fundersResponse?.data) {
-          const filtered = fundersResponse.data.filter(funder => 
+          const filtered = fundersResponse.data.filter(funder =>
             funder.attributes.name.toLowerCase().includes(searchQuery.toLowerCase())
           );
           setFilteredFunders(filtered);
@@ -58,7 +58,7 @@ export default function FunderSelectionModal() {
       } catch (error) {
         console.error('Error searching funders:', error);
         if (fundersResponse?.data) {
-          const filtered = fundersResponse.data.filter(funder => 
+          const filtered = fundersResponse.data.filter(funder =>
             funder.attributes.name.toLowerCase().includes(searchQuery.toLowerCase())
           );
           setFilteredFunders(filtered);
@@ -67,29 +67,29 @@ export default function FunderSelectionModal() {
         setIsSearching(false);
       }
     }, 300);
-    
+
     return () => {
       if (debounceTimeout.current) {
         clearTimeout(debounceTimeout.current);
       }
     };
   }, [searchQuery, fundersResponse]);
-  
+
   const handleFunderSelect = (funder: Funder) => {
     setSelectedFunder(funder.id);
     setFunderData(funder);
     setShowFunderSelectionModal(false);
   };
-  
+
   return (
     <Transition appear show={showFunderSelectionModal} as={Fragment}>
-      <Dialog 
-        as="div" 
-        className="relative z-50" 
+      <Dialog
+        as="div"
+        className="relative z-50"
         onClose={() => {}}
       >
         {/* Modal backdrop */}
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -99,11 +99,11 @@ export default function FunderSelectionModal() {
           leaveTo="opacity-0"
         >
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" aria-hidden="true" />
-        </Transition.Child>
-        
+        </TransitionChild>
+
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 scale-95"
@@ -112,17 +112,17 @@ export default function FunderSelectionModal() {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all">
-                <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all">
+                <DialogTitle as="h3" className="text-lg font-medium leading-6 text-gray-900">
                   Select a Funder
-                </Dialog.Title>
-                
+                </DialogTitle>
+
                 <div className="mt-4">
                   <p className="text-sm text-gray-500">
                     Please select a funder to view their funding metadata statistics.
                   </p>
                 </div>
-                
+
                 {/* Search input */}
                 <div className="mt-4">
                   <div className="relative rounded-md shadow-sm">
@@ -147,7 +147,7 @@ export default function FunderSelectionModal() {
                     )}
                   </div>
                 </div>
-                
+
                 {/* Funders list */}
                 <div className="mt-4 max-h-60 overflow-y-auto">
                   {isFundersLoading || isSearching ? (
@@ -157,7 +157,7 @@ export default function FunderSelectionModal() {
                   ) : (
                     <ul className="divide-y divide-gray-200">
                       {filteredFunders.map((funder) => (
-                        <li 
+                        <li
                           key={funder.id}
                           className="py-3 px-2 hover:bg-gray-50 cursor-pointer rounded"
                           onClick={() => handleFunderSelect(funder)}
@@ -173,8 +173,8 @@ export default function FunderSelectionModal() {
                     </ul>
                   )}
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </div>
       </Dialog>
