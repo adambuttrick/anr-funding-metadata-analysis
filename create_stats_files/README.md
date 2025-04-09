@@ -20,7 +20,6 @@ python create_stats_files.py -i input_file.csv [options]
 - `--publisher-yearly-output`: Path to output file for publisher yearly stats (default: publisher_yearly_stats.csv)
 - `--aggregate-only`: Only calculate aggregate statistics (skip publisher breakdown)
 - `--include-missing`: Include missing values in the statistics
-- `--funder-doi`: Funder DOI to track
 
 ## Output Reports
 

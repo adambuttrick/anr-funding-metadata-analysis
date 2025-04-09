@@ -15,7 +15,7 @@ def parse_arguments():
     parser.add_argument('-c', '--funder-config', required=True,
                         help='Path to the input JSON configuration file (containing funder_doi)')
     parser.add_argument('-o', '--output-dir', default='./stats_output',
-                        help='Directory to save the output CSV files (default: current directory)')
+                        help='Directory to save the output CSV files (default: stats_output)')
     parser.add_argument('--aggregate-only', action='store_true',
                         help='Only calculate aggregate statistics (skip publisher breakdown)')
     parser.add_argument('--include-missing', action='store_true',
