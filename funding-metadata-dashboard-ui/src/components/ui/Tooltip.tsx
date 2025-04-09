@@ -14,7 +14,7 @@ const TooltipProvider = TooltipPrimitive.Provider;
 const TooltipRoot = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
 const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
+  React.ComponentRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
 >(({ sideOffset = 4, ...props }, ref) => (
   <TooltipPrimitive.Content
@@ -26,8 +26,8 @@ const TooltipContent = React.forwardRef<
 ));
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export function Tooltip({ 
-  children, 
+export function Tooltip({
+  children,
   content,
   side = 'top',
   align = 'center'

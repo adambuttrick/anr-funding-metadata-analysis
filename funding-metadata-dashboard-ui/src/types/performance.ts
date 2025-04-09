@@ -1,5 +1,5 @@
-import { MetadataPerformance } from '../lib/metrics';
-import { Publisher, MetadataStats } from '../lib/api';
+import { MetadataPerformance } from '@/lib/metrics';
+import { Publisher, MetadataStats } from '@/lib/api';
 
 export interface PerformanceCardProps {
   funderId?: string;
