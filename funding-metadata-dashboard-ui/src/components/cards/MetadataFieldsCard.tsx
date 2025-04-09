@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useFunderData } from '../../hooks/useFunderData';
+import { useFunderData } from '@/hooks/useFunderData';
 import { calculateMetadataPerformance, calculateMetadataPerformanceForDateRange, calculatePublisherMetadataPerformance, getPublisherAggregateStats } from '../../lib/metrics';
 import { Tooltip } from '@/components/ui/Tooltip';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
@@ -10,12 +10,12 @@ import { useDateRange } from '@/contexts/DateRangeContext';
 import { Publisher, api } from '@/lib/api';
 import { CHART_COLORS, DOI_ASSERTION, TEXT_COLORS } from '@/constants/colors';
 import { CardContainer } from '@/components/layout';
-import { 
-  MetadataFieldsCardProps, 
-  MetadataField, 
-  DoiAssertionPieChartProps, 
-  MetadataContent, 
-  formatPercentage 
+import {
+  MetadataFieldsCardProps,
+  MetadataField,
+  DoiAssertionPieChartProps,
+  MetadataContent,
+  formatPercentage
 } from '@/types/metadata';
 
 function DoiAssertionPieChart({ doiAssertionStats }: DoiAssertionPieChartProps) {
@@ -24,18 +24,18 @@ function DoiAssertionPieChart({ doiAssertionStats }: DoiAssertionPieChartProps) 
     { name: 'Publisher', value: doiAssertionStats.publisher, color: DOI_ASSERTION.PUBLISHER },
     { name: 'Not Asserted', value: doiAssertionStats.notAsserted, color: DOI_ASSERTION.NOT_ASSERTED }
   ];
-  
+
   const renderCustomLegend = () => {
     return (
       <div className="flex flex-wrap justify-center gap-x-2 gap-y-1 text-xs sm:text-sm md:gap-x-4">
         {pieData.map((entry, index) => (
           <div key={`legend-${index}`} className="flex items-center min-w-0 px-1">
-            <div 
-              className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 rounded-sm flex-shrink-0" 
+            <div
+              className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-1 rounded-sm flex-shrink-0"
               style={{ backgroundColor: entry.color }}
             />
-            <span 
-              className="truncate" 
+            <span
+              className="truncate"
               style={{ color: entry.name === 'Not Asserted' ? TEXT_COLORS.MUTED : 'inherit' }}
             >
               {entry.name}{' '}
@@ -48,7 +48,7 @@ function DoiAssertionPieChart({ doiAssertionStats }: DoiAssertionPieChartProps) 
       </div>
     );
   };
-  
+
   return (
     <div className="bg-white rounded-lg p-3 mt-3 border border-gray-200 shadow-sm">
       <h4 className="text-sm font-medium text-gray-600 mb-2">Funder DOI Asserted By</h4>
@@ -101,7 +101,7 @@ export default function MetadataFieldsCard({ funderId }: MetadataFieldsCardProps
         }
       }
     }
-    
+
     fetchPublisherData();
   }, [selectedPublisher, startYear, endYear]);
 
@@ -110,12 +110,12 @@ export default function MetadataFieldsCard({ funderId }: MetadataFieldsCardProps
 
     let metrics;
     let dataSource = 'Funder';
-    
+
     if (selectedPublisher && publisherData) {
       const publisherMetrics = funderId && publisherData.stats.by_funder[funderId]
         ? calculatePublisherMetadataPerformance(publisherData, funderId, startYear, endYear)
         : getPublisherAggregateStats(publisherData, startYear, endYear);
-        
+
       if (publisherMetrics) {
         metrics = publisherMetrics;
         dataSource = 'Publisher';
@@ -146,7 +146,7 @@ export default function MetadataFieldsCard({ funderId }: MetadataFieldsCardProps
       }
     }
   }, [data, publisherData, loading, publisherLoading, selectedPublisher, startYear, endYear, computeMetrics]);
-  
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     // Don't immediately show loading state when data is being fetched
@@ -168,48 +168,48 @@ export default function MetadataFieldsCard({ funderId }: MetadataFieldsCardProps
 
   // Always use previous content during loading to prevent flashing
   const content = (!loading && !publisherLoading) ? computeMetrics() : previousContent;
-  
+
   if ((loading || publisherLoading) && !previousContent) {
     return <CardContainer isLoading={true} minHeight="24rem" preserveHeight={true}><div /></CardContainer>;
   }
-  
+
   if (error && !previousContent) {
     return <CardContainer>Error loading metadata stats</CardContainer>;
   }
-  
+
   if (!content) {
     return <CardContainer isLoading={true} minHeight="24rem" preserveHeight={true}><div /></CardContainer>;
   }
 
   const { metrics, dataSource } = content;
-  
+
   if (!metrics) {
     return <CardContainer>No metadata metrics available</CardContainer>;
   }
-  
+
   const barChartFields = [
-    { 
+    {
       name: 'Funder DOI',
       description: 'Percentage of publications with a valid Funder DOI',
       value: metrics.breakdown.funderDoi,
       color: CHART_COLORS.PUBLISHER_SERIES[0] // blue-500
     },
-    { 
+    {
       name: 'Award Code',
       description: 'Percentage of publications with a matching award code in our database',
       value: metrics.breakdown.awardCode,
       color: CHART_COLORS.PUBLISHER_SERIES[4] // emerald-500
     },
-    { 
+    {
       name: 'Funder Name',
       description: 'Percentage of publications with a funder name that matches our records',
       value: metrics.breakdown.funderName,
       color: CHART_COLORS.PUBLISHER_SERIES[2] // violet-500
     }
   ];
-  
+
   return (
-    <CardContainer 
+    <CardContainer
       isLoading={visualLoading}
       preserveHeight={true}
     >
@@ -218,7 +218,7 @@ export default function MetadataFieldsCard({ funderId }: MetadataFieldsCardProps
           <h3 className="text-sm text-gray-500">Funding Metadata Fields</h3>
           <p className="text-xs text-gray-500">Completeness metrics - {dataSource}</p>
         </div>
-        
+
         {/* Bar chart metrics */}
         <div className="space-y-3">
           {barChartFields.map((field: MetadataField) => (
@@ -234,9 +234,9 @@ export default function MetadataFieldsCard({ funderId }: MetadataFieldsCardProps
                 </div>
               </Tooltip>
               <div className="h-2 overflow-hidden rounded-full bg-gray-100">
-                <div 
+                <div
                   className="h-full rounded-full transition-all duration-500"
-                  style={{ 
+                  style={{
                     width: `${field.value}%`,
                     backgroundColor: field.color
                   }}
@@ -245,10 +245,10 @@ export default function MetadataFieldsCard({ funderId }: MetadataFieldsCardProps
             </div>
           ))}
         </div>
-        
+
         {/* Divider */}
         <div className="border-t border-gray-200 my-8"></div>
-        
+
         {/* DOI Assertion section */}
         <div>
           {/* Pie chart sub-card */}

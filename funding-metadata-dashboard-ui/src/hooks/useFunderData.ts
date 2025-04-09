@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { api, Funder } from '../lib/api';
-import { useDateRange } from '../contexts/DateRangeContext';
+import { api, Funder } from '@/lib/api';
+import { useDateRange } from '@/contexts/DateRangeContext';
 
 export function useFunderData(funderId?: string) {
   const [data, setData] = useState<Funder | null>(null);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api, Publisher } from '../lib/api';
+import { api, Publisher } from '@/lib/api';
 
 export function usePublisherData(publisherId: string) {
   const [data, setData] = useState<Publisher | null>(null);

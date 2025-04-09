@@ -1,25 +1,25 @@
 'use client';
 
-import { useFunderData } from '../../hooks/useFunderData';
-import { calculateMetadataPerformance, calculateMetadataPerformanceForDateRange } from '../../lib/metrics';
-import { getPublisherAggregateStats } from '../../lib/metrics';
+import { useFunderData } from '@/hooks/useFunderData';
+import { calculateMetadataPerformance, calculateMetadataPerformanceForDateRange } from '@/lib/metrics';
+import { getPublisherAggregateStats } from '@/lib/metrics';
 import { usePublisher } from '@/contexts/PublisherContext';
 import { useDateRange } from '@/contexts/DateRangeContext';
 import { api } from '@/lib/api';
 import { useEffect, useState, useCallback } from 'react';
 import { CardContainer } from '@/components/layout';
-import { 
-  PerformanceCardProps, 
+import {
+  PerformanceCardProps,
   PerformanceCardState,
   FunderData,
-  ComputePerformanceFunction 
+  ComputePerformanceFunction
 } from '@/types/performance';
 
 export default function PerformanceCard({ funderId }: PerformanceCardProps) {
   const { data, loading, error } = useFunderData(funderId) as { data: FunderData | null, loading: boolean, error: Error | unknown };
   const { selectedPublisher } = usePublisher();
   const { startYear, endYear } = useDateRange();
-  
+
   const [state, setState] = useState<PerformanceCardState>({
     publisherData: null,
     publisherLoading: false,
@@ -41,7 +41,7 @@ export default function PerformanceCard({ funderId }: PerformanceCardProps) {
         }
       }
     }
-    
+
     fetchPublisherData();
   }, [selectedPublisher, startYear, endYear]);
 
@@ -51,16 +51,16 @@ export default function PerformanceCard({ funderId }: PerformanceCardProps) {
     let performance;
     let dataSource = 'Funder Overall';
     let publicationCount = 0;
-    
+
     if (selectedPublisher && state.publisherData) {
       if (funderId && state.publisherData.stats.by_funder[funderId]) {
-        if (state.publisherData.stats.by_funder[funderId].yearly && 
-            Object.keys(state.publisherData.stats.by_funder[funderId].yearly).length > 0 && 
-            startYear !== undefined && 
+        if (state.publisherData.stats.by_funder[funderId].yearly &&
+            Object.keys(state.publisherData.stats.by_funder[funderId].yearly).length > 0 &&
+            startYear !== undefined &&
             endYear !== undefined) {
           const rangeStats = calculateMetadataPerformanceForDateRange(
-            state.publisherData.stats.by_funder[funderId].yearly, 
-            startYear, 
+            state.publisherData.stats.by_funder[funderId].yearly,
+            startYear,
             endYear
           );
           performance = calculateMetadataPerformance(rangeStats);
@@ -89,7 +89,7 @@ export default function PerformanceCard({ funderId }: PerformanceCardProps) {
       } else {
         performance = calculateMetadataPerformance(data.stats.aggregate);
       }
-      publicationCount = data?.stats?.aggregate?.records_in_funder_data || 
+      publicationCount = data?.stats?.aggregate?.records_in_funder_data ||
                         data?.relationships?.publishers?.reduce((sum, pub) => sum + pub.publication_count, 0) || 0;
     } else {
       return null;
@@ -106,7 +106,7 @@ export default function PerformanceCard({ funderId }: PerformanceCardProps) {
       }
     }
   }, [data, state.publisherData, loading, state.publisherLoading, selectedPublisher, startYear, endYear, computePerformance, funderId]);
-  
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (loading || state.publisherLoading) {
@@ -121,32 +121,32 @@ export default function PerformanceCard({ funderId }: PerformanceCardProps) {
     return () => clearTimeout(timer);
   }, [loading, state.publisherLoading]);
 
-  const content = (!loading && !state.publisherLoading) 
-    ? computePerformance(data, state.publisherData, selectedPublisher, funderId, startYear, endYear) 
+  const content = (!loading && !state.publisherLoading)
+    ? computePerformance(data, state.publisherData, selectedPublisher, funderId, startYear, endYear)
     : state.previousContent;
-  
+
   if ((loading || state.publisherLoading) && !state.previousContent) {
     return <CardContainer isLoading={true} minHeight="12rem" preserveHeight={true}><div /></CardContainer>;
   }
-  
+
   if (error && !state.previousContent) {
     return <CardContainer>Error loading performance data</CardContainer>;
   }
-  
+
   if (!content) {
     return <CardContainer isLoading={true} minHeight="12rem" preserveHeight={true}><div /></CardContainer>;
   }
 
   const { performance, dataSource, publicationCount } = content;
-  
-  const formattedRecords = (num: number) => Intl.NumberFormat('en-US', { 
+
+  const formattedRecords = (num: number) => Intl.NumberFormat('en-US', {
     notation: 'compact',
-    maximumFractionDigits: 1 
+    maximumFractionDigits: 1
   }).format(num);
 
   return (
-    <CardContainer 
-      title="Performance" 
+    <CardContainer
+      title="Performance"
       titleClassName="text-center"
       isLoading={state.visualLoading}
       preserveHeight={true}
@@ -155,7 +155,7 @@ export default function PerformanceCard({ funderId }: PerformanceCardProps) {
         <div className="text-6xl font-bold mb-2">{performance.overall}%</div>
         <div className="text-gray-500">{dataSource}</div>
       </div>
-      
+
       <div className="mt-4 pt-4 border-t border-gray-100">
         <div className="flex items-center justify-center text-sm">
           <span className="font-medium mr-2">Publications:</span>
