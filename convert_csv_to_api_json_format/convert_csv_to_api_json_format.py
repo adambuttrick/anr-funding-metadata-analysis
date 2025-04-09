@@ -134,7 +134,7 @@ def extract_publisher_info(publisher_stats_data, funding_analysis_data):
     return list(publishers.values())
 
 
-def process_publisher_data(publisher_stats_data, publisher_yearly_stats_data, funder_simple_id, ror_id, funder_name):
+def process_publisher_data(publisher_stats_data, publisher_yearly_stats_data, funder_simple_id, funder_name):
     publishers = defaultdict(lambda: {
         "id": "",
         "type": "publisher",
@@ -399,14 +399,14 @@ def main():
     ror_id = args.ror_id
     funder_name = args.funder_name
     funder_doi = args.funder_doi
-    funder_simple_id = args.ror_id.split('/')[-1] if args.ror_id else ''
+    funder_simple_id = (args.ror_id if args.ror_id else args.funder_doi).split('/')[-1]
 
     total_publications = get_total_publications_count(aggregate_stats_data)
     aggregate_stats = process_aggregate_stats(aggregate_stats_data)
     yearly_stats = process_yearly_stats(yearly_stats_data)
 
     publishers_data = process_publisher_data(
-        publisher_stats_data, publisher_yearly_stats_data, funder_simple_id, ror_id, funder_name)
+        publisher_stats_data, publisher_yearly_stats_data, funder_simple_id, funder_name)
 
     publisher_relations = []
     for publisher in publishers_data:

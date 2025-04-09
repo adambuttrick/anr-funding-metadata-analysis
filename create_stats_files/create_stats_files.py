@@ -1,12 +1,13 @@
-import csv
 import argparse
+import csv
 from collections import defaultdict, Counter
+import os
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
         description='Calculate statistics for funding data fields.')
-    parser.add_argument('-i', '--input_file', required=True,
+    parser.add_argument('-i', '--input-file', required=True,
                         help='Path to the input CSV file')
     parser.add_argument('-o', '--output-dir', default='./stats_output',
                         help='Directory to save the output CSV files (default: stats_output)')
@@ -14,7 +15,7 @@ def parse_arguments():
                         help='Only calculate aggregate statistics (skip publisher breakdown)')
     parser.add_argument('--include-missing', action='store_true',
                         help='Include missing values in the statistics')
-    parser.add_argument('--funder_doi', required=True,
+    parser.add_argument('--funder-doi', required=True,
                         help='Funder DOI to track')
     return parser.parse_args()
 
