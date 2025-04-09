@@ -8,30 +8,53 @@ Script to check and categorize DOIs by their registration agency (RA).
 pip install requests
 ```
 
-
 ## Usage
 
 ```bash
-python check_ra.py -i INPUT_FILE [-o OUTPUT_DIR] [-c COLUMN_NAME] [-d DELAY]
+python check_ra.py -i INPUT_FILE -o OUTPUT_FILE [OPTIONS]
 ```
 
 ### Arguments
 
-- `-i, --input_file`: Path to input CSV file containing DOIs (required)
-- `-o, --output_dir`: Directory for output files (default: `output`)
-- `-c, --column`: Column name in CSV containing DOIs (default: `doi`)
-- `-d, --delay`: Delay between API requests in seconds (default: 1.0)
+Required arguments:
+- `-i, --input`: Input CSV file path
+- `-o, --output`: Output CSV file path
+
+Optional arguments:
+- `-c, --column`: Column name containing DOIs (default: `doi`)
+- `-m, --retries`: Maximum retry attempts for failed requests (default: `3`)
+- `-y, --retry-delay`: Delay between retries in seconds (default: `10`)
+- `-t, --token`: API token (if required by endpoint)
+- `-u, --user-agent`: User-Agent for API requests (default: `DOI RA Lookup Script/1.0`)
+- `-l, --log-file`: File to log errors (default: `doi_ra_errors.log`)
+- `-w, --workers`: Number of worker threads for parallel processing (default: `5`)
+- `-f, --failed-output`: CSV file for failed entries (default: `failed_dois.csv`)
+- `--limit`: Limit the number of rows to process (for testing)
+- `--force-overwrite`: Overwrite existing output files without prompting
 
 ## Output
 
-The script creates separate CSV files in the output directory, named after each RA found (e.g., `crossref.csv`, `datacite.csv`). Each file contains:
+The script generates two CSV files:
+1. The main output file containing processed DOIs with their registration agencies
+2. A separate file for failed DOI lookups with error details
 
-- `doi`: The extracted DOI
-- `status`: Validity status of the DOI
-- `original_string`: The original string from which the DOI was extracted
+Both output files contain all the columns from the original input file plus:
+- `registration_agency`: The registration agency for the DOI (or 'ERROR' if not found)
+- `error`: Error details (if any)
 
-## Example
+## Examples
 
+Basic usage:
 ```bash
-python check_ra.py -i dois.csv -o results -c doi_column -d 0.5
+python check_ra.py -i data/my_dois.csv -o results/ra_results.csv
+```
+
+Advanced usage with more options:
+```bash
+python check_ra.py -i data/my_dois.csv -o results/ra_results.csv -c doi_column -w 10 -m 5 -y 5 -f results/failed_dois.csv --force-overwrite
+```
+
+Process a subset of rows for testing:
+```bash
+python check_ra.py -i data/my_dois.csv -o results/ra_results.csv --limit 100
 ```
