@@ -30,7 +30,7 @@ def main():
                 data.append(d)
             else:
                 # TODO
-                print("a merge should be done and appent to data")
+                print(f"a merge should be done for {item.get('key')} and append to data")
         with open(f"{args.output_dir}/{item.get('file_name')}", "w", encoding="utf-8") as f:
             json.dump({ item.get("key") : data }, f, indent=2)
 
