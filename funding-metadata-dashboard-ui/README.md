@@ -25,4 +25,4 @@ yarn dev
 npm run lint
 ```
 
-Open your browser and navigate to the URL shown in the terminal (typically http://localhost:3000) to see the dashboard.
+Open your browser and navigate to the URL shown in the terminal (typically http://localhost:3001) to see the dashboard.
