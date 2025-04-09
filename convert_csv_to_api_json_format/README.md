@@ -21,7 +21,7 @@ python convert_csv_to_api_json_format.py -i <input_dir> -o <output_dir> -n <fund
 - `-i, --input-dir`: Directory containing input CSV files
 - `-o, --output-dir`: Output directory for JSON files
 - `-n, --funder-name`: Name of the funder
-- `-d, --funder-doi`: DOI of the funder
+- `-c, --funder-config`: Funder config file containing the Funder ID/DOI to track
 - `-r, --ror-id`: ROR ID of the funder
 
 ### Optional Arguments

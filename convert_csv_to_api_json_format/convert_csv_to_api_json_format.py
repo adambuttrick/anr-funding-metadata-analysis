@@ -15,8 +15,8 @@ def parse_args():
                         help='Output directory for JSON files')
     parser.add_argument('-n', '--funder-name',
                         required=True, help='Name of the funder')
-    parser.add_argument('-d', '--funder-doi', required=True,
-                        help='DOI of the funder')
+    parser.add_argument('-c', '--funder-config', required=True,
+                        help='Path to the funder configuration JSON file')
     parser.add_argument('-r', '--ror-id', help='ROR ID of the funder')
     parser.add_argument('-f', '--funder-file', default='funder.json',
                         help='Filename for funder output (default: funder.json)')
@@ -32,6 +32,9 @@ def read_csv(file_path):
         reader = csv.DictReader(f)
         return list(reader)
 
+def load_funder_config(file_path):
+    with open(file_path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 def process_aggregate_stats(data):
     result = {
@@ -52,6 +55,7 @@ def process_aggregate_stats(data):
                 "count": count,
                 "percentage": percentage
             }
+            result["records_in_funder_data"] = total_records
         elif field == 'has_funder_doi':
             result["has_funder_doi"][value_type] = {
                 "count": count,
@@ -67,8 +71,6 @@ def process_aggregate_stats(data):
                 "count": count,
                 "percentage": percentage
             }
-        if field == 'doi_asserted_by':
-            result["records_in_funder_data"] = total_records
     return result
 
 
@@ -390,6 +392,12 @@ def main():
         input_dir, 'publisher_yearly_stats.csv')
     funding_analysis_file = os.path.join(input_dir, 'funding_analysis.csv')
 
+    funder_config_data = load_funder_config(args.funder_config)
+    funder_doi = funder_config_data.get('funder_doi')
+    if not funder_doi:
+        print(f"Error: 'funder_doi' not found in {args.funder_config}")
+        exit(1)
+
     aggregate_stats_data = read_csv(aggregate_stats_file)
     yearly_stats_data = read_csv(yearly_stats_file)
     publisher_stats_data = read_csv(publisher_stats_file)
@@ -398,8 +406,7 @@ def main():
 
     ror_id = args.ror_id
     funder_name = args.funder_name
-    funder_doi = args.funder_doi
-    funder_simple_id = (args.ror_id if args.ror_id else args.funder_doi).split('/')[-1]
+    funder_simple_id = (ror_id if ror_id else funder_doi).split('/')[-1]
 
     total_publications = get_total_publications_count(aggregate_stats_data)
     aggregate_stats = process_aggregate_stats(aggregate_stats_data)
