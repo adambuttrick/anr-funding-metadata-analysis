@@ -26,6 +26,12 @@ export const DOI_ASSERTION = {
   NOT_ASSERTED: '#f5f5f5'                        // gray-100
 };
 
+export const DOI_ASSERTED_BY = {
+  CROSSREF: '#3B82F6',
+  PUBLISHER: '#85b2f9',
+  NOT_ASSERTED: '#f5f5f5'
+};
+
 export const TEXT_COLORS = {
   PRIMARY: '#000000',
   SECONDARY: '#8F8F8F',
