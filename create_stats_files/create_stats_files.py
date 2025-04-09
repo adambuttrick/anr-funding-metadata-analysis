@@ -1,5 +1,8 @@
-import argparse
+import os
 import csv
+import sys
+import json
+import argparse
 from collections import defaultdict, Counter
 import os
 
@@ -9,15 +12,34 @@ def parse_arguments():
         description='Calculate statistics for funding data fields.')
     parser.add_argument('-i', '--input-file', required=True,
                         help='Path to the input CSV file')
+    parser.add_argument('-c', '--funder-config', required=True,
+                        help='Path to the input JSON configuration file (containing funder_doi)')
     parser.add_argument('-o', '--output-dir', default='./stats_output',
-                        help='Directory to save the output CSV files (default: stats_output)')
+                        help='Directory to save the output CSV files (default: current directory)')
     parser.add_argument('--aggregate-only', action='store_true',
                         help='Only calculate aggregate statistics (skip publisher breakdown)')
     parser.add_argument('--include-missing', action='store_true',
                         help='Include missing values in the statistics')
-    parser.add_argument('--funder-doi', required=True,
-                        help='Funder DOI to track')
     return parser.parse_args()
+
+
+def read_json_config(file_path):
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+            if 'funder_doi' not in config:
+                print(f"Error: 'funder_doi' key missing in config file: {file_path}")
+                exit(1)
+            return config
+    except FileNotFoundError:
+        print(f"Error: Config file not found: {file_path}")
+        exit(1)
+    except json.JSONDecodeError:
+        print(f"Error: Invalid JSON format in config file: {file_path}")
+        exit(1)
+    except Exception as e:
+        print(f"Error reading config file {file_path}: {e}")
+        exit(1)
 
 
 def read_csv_data(file_path):
@@ -807,6 +829,9 @@ def write_publisher_yearly_csv(publisher_yearly_stats, output_path):
 
 def main():
     args = parse_arguments()
+    config = read_json_config(args.funder_config)
+    funder_doi = config.get('funder_doi')
+
     boolean_fields = ['has_funder_doi', 'code_in_awards', 'name_in_funders']
     data = read_csv_data(args.input_file)
 
@@ -818,22 +843,22 @@ def main():
     publisher_yearly_output_path = os.path.join(args.output_dir, 'publisher_yearly_stats.csv')
 
     aggregate_stats = calculate_aggregate_stats(
-        data, boolean_fields, args.include_missing, args.funder_doi)
+        data, boolean_fields, args.include_missing, funder_doi)
     write_aggregate_csv(
         aggregate_stats, aggregate_output_path, args.include_missing)
 
     yearly_stats = calculate_yearly_stats(
-        data, boolean_fields, args.include_missing, args.funder_doi)
+        data, boolean_fields, args.include_missing, funder_doi)
     write_yearly_csv(
         yearly_stats, yearly_output_path, args.include_missing)
 
     if not args.aggregate_only:
         publisher_stats = calculate_publisher_stats(
-            data, boolean_fields, args.include_missing, args.funder_doi)
+            data, boolean_fields, args.include_missing, funder_doi)
         write_publisher_csv(publisher_stats, publisher_output_path)
 
         publisher_yearly_stats = calculate_publisher_yearly_stats(
-            data, boolean_fields, args.include_missing, args.funder_doi)
+            data, boolean_fields, args.include_missing, funder_doi)
         write_publisher_yearly_csv(publisher_yearly_stats, publisher_yearly_output_path)
 
 

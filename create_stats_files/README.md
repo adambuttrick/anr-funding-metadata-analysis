@@ -13,6 +13,7 @@ python create_stats_files.py -i input_file.csv [options]
 
 - `-i, --input-file`: Path to the input CSV file
 - `-o, --output-dir`: Directory to save the output CSV files (default: stats_output)
+- `-c, --funder-config`: Funder config file containing the Funder ID/DOI to track
 - `--aggregate-output`: Path to output file for aggregate stats (default: aggregate_stats.csv)
 - `--publisher-output`: Path to output file for publisher stats (default: publisher_stats.csv)
 - `--yearly-output`: Path to output file for yearly stats (default: yearly_stats.csv)
