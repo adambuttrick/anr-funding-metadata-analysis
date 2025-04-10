@@ -392,10 +392,10 @@ class RequestManager:
                     pass
 
 
-def main():
+def check_ra(a=False):
     setup_signal_handlers()
     
-    args = parse_arguments()
+    args = a if a else parse_arguments()
 
     if not check_output_files(args):
         return
@@ -496,4 +496,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    check_ra()
