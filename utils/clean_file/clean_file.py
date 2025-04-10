@@ -7,7 +7,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(
         description='Clean file by selecting and renaming accurated columns, and clean DOIs')
     parser.add_argument('-i', '--input', required=True,
-                        help='Input CSV file path')
+                        help='Input CSV or JSON file path')
     parser.add_argument('-o', '--output', required=True,
                         help='Output CSV file path')
     parser.add_argument('-f', '--funder-code-column', default='funder_code',
@@ -35,7 +35,14 @@ def clean_file (publications, funder_code_column, title_column, publication_year
 
 def main():
     args = parse_arguments()
-    df = pd.read_csv(args.input)
+    input_file_extension = args.input.split('.')[-1]
+    if input_file_extension == "csv":
+        df = pd.read_csv(args.input)
+    elif input_file_extension == "json":
+        df = pd.read_json(args.input)
+    else:
+        print("ERROR on input file, only CSV or JSON files are supported")
+        return
     df = clean_file(df, args.funder_code_column, args.title_column, args.publication_year_column, args.doi_column)
     df.to_csv(args.output, encoding="utf-8")
 

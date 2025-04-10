@@ -11,7 +11,7 @@ python clean_file.py -i INPUT_FILE -o OUTPUT_FILE [OPTIONS]
 ### Arguments
 
 Required arguments:
-- `-i, --input`: Input CSV file path
+- `-i, --input`: Input CSV or JSON file path
 - `-o, --output`: Output CSV file path
 
 Optional arguments:
