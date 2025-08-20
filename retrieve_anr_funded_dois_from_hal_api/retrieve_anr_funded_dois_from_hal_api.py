@@ -33,7 +33,7 @@ def setup_argument_parser():
                         help='Output CSV file (default: anr_dois.csv)')
     parser.add_argument('-c', '--code-column', default='Code Projet ANR',
                         help='Column name that contains ANR project codes (default: "Code Projet ANR")')
-    parser.add_argument('--delay', type=float, default=0.5,
+    parser.add_argument('--delay', type=float, default=1,
                         help='Delay between API requests in seconds (default: 0.5)')
     parser.add_argument('--max-results', type=int, default=1000,
                         help='Maximum number of results to retrieve per project (default: 1000)')
@@ -47,24 +47,34 @@ def setup_argument_parser():
 def read_anr_codes_from_csv(filepath, code_column):
     try:
         with open(filepath, 'r', encoding='utf-8-sig') as file:
-            reader = csv.DictReader(file)
-            if code_column not in next(reader, {}):
-                available_columns = list(
-                    reader.fieldnames) if reader.fieldnames else []
-                logger.error(f"Column '{code_column}' not found in CSV. Available columns: {', '.join(available_columns)}")
-                return []
+            first_line = file.readline()
             file.seek(0)
-            next(reader)
-            anr_codes = [row[code_column]
-                         for row in reader if row[code_column]]
-            logger.info(f"Found {len(anr_codes)} ANR codes in the input file")
-            return anr_codes
+
+            delimiter = ';' if ';' in first_line else ','
+
+            reader = csv.DictReader(file, delimiter=delimiter)
+            fieldnames = reader.fieldnames
+            if not fieldnames:
+                logger.error("CSV file appears to be empty or has no header")
+                return [], [], ','
+
+            if code_column not in fieldnames:
+                logger.error(f"Column '{code_column}' not found in CSV. Available columns: {', '.join(fieldnames)}")
+                return [], [], delimiter
+
+            rows = []
+            for row in reader:
+                if row[code_column]:
+                    rows.append(row)
+
+            logger.info(f"Found {len(rows)} rows with ANR codes in the input file")
+            return rows, fieldnames, delimiter
     except FileNotFoundError:
         logger.error(f"Input file not found: {filepath}")
-        return []
+        return [], [], ','
     except Exception as e:
         logger.error(f"Error reading input file: {e}")
-        return []
+        return [], [], ','
 
 
 def query_hal_api(anr_code, max_results=1000, max_retries=2):
@@ -132,29 +142,32 @@ def query_hal_api(anr_code, max_results=1000, max_retries=2):
     return []
 
 
-def initialize_output_file(output_filepath):
-    fieldnames = ['anr_code', 'doi', 'title', 'hal_id', 'submitted_date']
+def initialize_output_file(output_filepath, input_fieldnames, delimiter=','):
+    hal_fields = ['doi', 'title', 'hal_id', 'submitted_date']
+    fieldnames = input_fieldnames + hal_fields
+
     try:
         with open(output_filepath, 'w', encoding='utf-8') as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer = csv.DictWriter(
+                file, fieldnames=fieldnames, delimiter=delimiter)
             writer.writeheader()
         logger.debug(f"Initialized output file: {output_filepath}")
-        return True
+        return True, fieldnames
     except Exception as e:
         logger.error(f"Error initializing output file: {e}")
-        return False
+        return False, []
 
 
-def append_results_to_csv(results, output_filepath):
+def append_results_to_csv(results, output_filepath, fieldnames, delimiter=','):
     if not results:
         return
 
-    fieldnames = ['anr_code', 'doi', 'title', 'hal_id', 'submitted_date']
     try:
         file_exists = os.path.isfile(output_filepath)
 
         with open(output_filepath, 'a', encoding='utf-8') as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
+            writer = csv.DictWriter(
+                file, fieldnames=fieldnames, delimiter=delimiter)
             if not file_exists:
                 writer.writeheader()
             writer.writerows(results)
@@ -164,47 +177,67 @@ def append_results_to_csv(results, output_filepath):
         logger.error(f"Error appending results to CSV: {e}")
 
 
-def process_anr_projects(anr_codes, output_filepath, max_results=1000, delay=0.5, max_retries=2):
+def process_anr_projects(rows, code_column, input_fieldnames, output_filepath, delimiter=',', max_results=1000, delay=0.5, max_retries=2):
     total_dois = 0
-    processed_codes = 0
+    processed_rows = 0
+    rows_with_dois = 0
 
-    if not initialize_output_file(output_filepath):
+    success, output_fieldnames = initialize_output_file(
+        output_filepath, input_fieldnames, delimiter)
+    if not success:
         return False
 
-    for i, anr_code in enumerate(anr_codes):
+    for i, row in enumerate(rows):
         if shutdown_requested:
-            logger.warning(f"Processing stopped after {processed_codes}/{len(anr_codes)} ANR codes due to shutdown request")
+            logger.warning(f"Processing stopped after {processed_rows}/{len(rows)} rows due to shutdown request")
             break
 
-        logger.info(f"Processing ANR code {i+1}/{len(anr_codes)}: {anr_code}")
+        anr_code = row[code_column]
+        logger.info(f"Processing row {i+1}/{len(rows)}: ANR code {anr_code}")
 
         documents = query_hal_api(anr_code, max_results, max_retries)
 
         batch_results = []
+        dois_found = False
+
         for doc in documents:
             doi = doc.get('doiId_s', '')
             if doi:
-                result = {
-                    'anr_code': anr_code,
+                dois_found = True
+                result = row.copy()
+                result.update({
                     'doi': doi,
                     'title': doc.get('title_s', [''])[0] if isinstance(doc.get('title_s'), list) else doc.get('title_s', ''),
                     'hal_id': doc.get('halId_s', ''),
                     'submitted_date': doc.get('submittedDate_s', '')
-                }
+                })
                 batch_results.append(result)
 
         if batch_results:
-            append_results_to_csv(batch_results, output_filepath)
+            append_results_to_csv(
+                batch_results, output_filepath, output_fieldnames, delimiter)
             total_dois += len(batch_results)
+            rows_with_dois += 1
             logger.info(f"Found {len(batch_results)} DOIs for ANR code {anr_code}")
+        else:
+            result = row.copy()
+            result.update({
+                'doi': '',
+                'title': '',
+                'hal_id': '',
+                'submitted_date': ''
+            })
+            append_results_to_csv(
+                [result], output_filepath, output_fieldnames, delimiter)
+            logger.info(f"No DOIs found for ANR code {anr_code}")
 
-        processed_codes += 1
+        processed_rows += 1
 
-        if i < len(anr_codes) - 1 and not shutdown_requested:
+        if i < len(rows) - 1 and not shutdown_requested:
             time.sleep(delay)
 
-    logger.info(f"Found a total of {total_dois} DOIs across {processed_codes} ANR codes")
-    return total_dois > 0
+    logger.info(f"Processed {processed_rows} rows: {rows_with_dois} with DOIs ({total_dois} total DOIs), {processed_rows - rows_with_dois} without DOIs")
+    return True
 
 
 def main():
@@ -219,15 +252,19 @@ def main():
 
     logger.info("Starting HAL ANR DOI Retriever")
 
-    anr_codes = read_anr_codes_from_csv(args.input, args.code_column)
+    rows, fieldnames, delimiter = read_anr_codes_from_csv(
+        args.input, args.code_column)
 
-    if not anr_codes:
-        logger.error("No ANR codes found. Exiting.")
+    if not rows:
+        logger.error("No rows with ANR codes found. Exiting.")
         sys.exit(1)
 
     success = process_anr_projects(
-        anr_codes,
+        rows,
+        args.code_column,
+        fieldnames,
         args.output,
+        delimiter=delimiter,
         max_results=args.max_results,
         delay=args.delay,
         max_retries=args.max_retries

@@ -27,8 +27,7 @@ python retrieve_anr_funded_dois_from_hal_api.py -i input_file.csv [-o output_fil
 
 ## Output Format
 
-The script generates a CSV file with the following columns:
-- anr_code
+The script generates a CSV file with the input file data and then the following columns:
 - doi
 - title
 - hal_id
